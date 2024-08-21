@@ -14,7 +14,7 @@ Install micro-report with tidy
 #### Get all Sales
 
 ```http
-  GET /api/sales-excel
+  GET /api/sales-excel?companyID=bf4336e4-b9b7-11ec-b4c3-00505605deef&period=2024-01
 ```
 
 | Parameter | Type     | Description                |
