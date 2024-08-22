@@ -10,7 +10,8 @@ Install micro-report with tidy
 
 ## API Reference
 
-### Sales|
+### Sales
+
 #### Get all Sales
 
 ```http

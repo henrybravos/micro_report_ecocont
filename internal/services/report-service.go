@@ -3,15 +3,15 @@ package services
 import (
 	"bytes"
 	"github.com/henrybravo/micro-report/internal/report"
-	"github.com/henrybravo/micro-report/internal/repositories"
+	repo "github.com/henrybravo/micro-report/internal/repositories"
 )
 
 type ReportService struct {
-	SalesRepo      *repositories.SalesRepository
+	SalesRepo      *repo.SalesRepository
 	ExcelGenerator *report.ExcelGenerator
 }
 
-func NewReportService(salesRepo *repositories.SalesRepository, excelGenerator *report.ExcelGenerator) *ReportService {
+func NewReportService(salesRepo *repo.SalesRepository, excelGenerator *report.ExcelGenerator) *ReportService {
 	return &ReportService{
 		SalesRepo:      salesRepo,
 		ExcelGenerator: excelGenerator,
@@ -19,7 +19,7 @@ func NewReportService(salesRepo *repositories.SalesRepository, excelGenerator *r
 }
 
 func (s *ReportService) CreateExcelSales(companyID, period string) (*bytes.Buffer, error) {
-	sales, err := s.SalesRepo.GetSalesReports(companyID, period)
+	sales, _, err := s.SalesRepo.GetSalesReports(companyID, period, repo.PaginationParams{Pagination: false})
 	if err != nil {
 		return nil, err
 	}
@@ -28,4 +28,11 @@ func (s *ReportService) CreateExcelSales(companyID, period string) (*bytes.Buffe
 		return nil, err
 	}
 	return excel, nil
+}
+func (s *ReportService) CreateSalesPaginated(companyID, period string, offset, pageSize int) ([]repo.SalesReport, *repo.Pagination, error) {
+	sales, pagination, err := s.SalesRepo.GetSalesReports(companyID, period, repo.PaginationParams{Pagination: true, Offset: offset, Limit: pageSize})
+	if err != nil {
+		return nil, nil, err
+	}
+	return sales, pagination, nil
 }
