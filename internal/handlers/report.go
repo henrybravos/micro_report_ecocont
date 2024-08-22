@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/internal/services"
 	"net/http"
 	"strconv"
@@ -73,9 +74,12 @@ func (h *ReportHandler) GetSalesReportPaginated(c *gin.Context) {
 	}
 	pagination.Page = page
 	pagination.PageSize = pageSize
+	if sales == nil {
+		sales = []repositories.SalesReport{}
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"pagination": pagination,
-		"sales":      sales,
+		"data":       sales,
 	})
 
 }

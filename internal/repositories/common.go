@@ -1,15 +1,13 @@
 package repositories
 
 type Pagination struct {
-	Page       int
-	PageSize   int
-	TotalCount int
-	TotalPages int
+	Page       int    `json:"page"`
+	PageSize   int    `json:"pageSize"`
+	TotalCount int    `json:"totalCount"`
+	TotalPages int    `json:"totalPages"`
+	Err        string `json:"err"`
 }
-type PaginationResponse struct {
-	Data       []interface{}
-	Pagination Pagination
-}
+
 type PaginationParams struct {
 	Pagination bool
 	Offset     int
