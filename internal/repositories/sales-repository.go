@@ -122,7 +122,10 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
 		return nil, nil, err
 	}
 
-	totalPages := (totalCount + pagination.Limit - 1) / pagination.Limit
+	totalPages := 0
+	if pagination.Limit > 0 {
+		totalPages = (totalCount + pagination.Limit - 1) / pagination.Limit
+	}
 
 	if pagination.Offset > totalCount {
 		return nil, &Pagination{

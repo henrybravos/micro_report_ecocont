@@ -22,7 +22,6 @@ func main() {
 	reportService := services.NewReportService(salesRepo, excelGenerator)
 	reportHandler := handlers.NewReportHandler(reportService)
 	router := routes.SetupRouter(reportHandler)
-
 	log.Println("Server listening on port 8080")
 	err = router.Run(":8080")
 	if err != nil {

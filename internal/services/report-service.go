@@ -29,8 +29,8 @@ func (s *ReportService) CreateExcelSales(companyID, period string) (*bytes.Buffe
 	}
 	return excel, nil
 }
-func (s *ReportService) CreateSalesPaginated(companyID, period string, offset, pageSize int) ([]repo.SalesReport, *repo.Pagination, error) {
-	sales, pagination, err := s.SalesRepo.GetSalesReports(companyID, period, repo.PaginationParams{Pagination: true, Offset: offset, Limit: pageSize})
+func (s *ReportService) CreateSalesPaginated(companyID, period string, isPaginated bool, offset, pageSize int) ([]repo.SalesReport, *repo.Pagination, error) {
+	sales, pagination, err := s.SalesRepo.GetSalesReports(companyID, period, repo.PaginationParams{Pagination: isPaginated, Offset: offset, Limit: pageSize})
 	if err != nil {
 		return nil, nil, err
 	}
