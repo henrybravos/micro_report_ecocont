@@ -396,82 +396,93 @@ func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY
 	}
 	err = pdf.CellWithOption(rect, "", cellOptionBottom)
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.Cuo)
+	err = pdf.Text(sale.Cuo)
 	currentWriteW += layout.cuoW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.FecEmision)
+	err = pdf.Text(sale.FecEmision)
 	currentWriteW += layout.cpeFecEmiW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	fecVen := ""
 	if sale.FechaVencimiento.Valid {
 		fecVen = sale.FechaVencimiento.Time.Format("02/01/2006")
 	}
-	pdf.Text(fecVen)
+	err = pdf.Text(fecVen)
 	currentWriteW += layout.cpeFecVenW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.CodigoTipoCDP)
+	err = pdf.Text(sale.CodigoTipoCDP)
 	currentWriteW += layout.cpeTipoW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.NumSerieCDP)
+	err = pdf.Text(sale.NumSerieCDP)
 	currentWriteW += layout.cpeSerieW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.NumCDP)
+	err = pdf.Text(sale.NumCDP)
 	currentWriteW += layout.cpeNumW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text("  " + sale.CodTipoDocIdentidad)
+	err = pdf.Text("  " + sale.CodTipoDocIdentidad)
 	currentWriteW += layout.cliDocTipoW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.NumDocIdentidadClient)
+	err = pdf.Text(sale.NumDocIdentidadClient)
 	currentWriteW += layout.cliDocNumW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.RazonSocial)
+	lenRazon := len(sale.RazonSocial)
+	if lenRazon > 40 {
+		err = pdf.SetFont("arial", "", 3)
+		rect = &gopdf.Rect{
+			H: layout.rowTableH * 3,
+			W: layout.cliApeNomW,
+		}
+		err = pdf.MultiCell(rect, sale.RazonSocial)
+		err = pdf.SetFont("arial", "", 4.5)
+	} else {
+		err = pdf.Text(sale.RazonSocial)
+	}
 	currentWriteW += layout.cliApeNomW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.MtoValFactExpo))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoValFactExpo))
 	currentWriteW += layout.valFacOExpW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.Base))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
 	currentWriteW += layout.baseImpW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.IGV))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.IGV))
 	currentWriteW += layout.igvW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.Exonerada))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Exonerada))
 	currentWriteW += layout.totalExoW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.Inafecta))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Inafecta))
 	currentWriteW += layout.totalInaW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.ISC))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.ISC))
 	currentWriteW += layout.iscW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.Base))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
 	currentWriteW += layout.opBaseW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.BaseIVAP))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.BaseIVAP))
 	currentWriteW += layout.opIVAPW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.ICBPER))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.ICBPER))
 	currentWriteW += layout.icbW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.Otros))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Otros))
 	currentWriteW += layout.otrosW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.MtoTotalCP))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoTotalCP))
 	currentWriteW += layout.impTotalW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(fmt.Sprintf("%.2f", sale.TipoCambio))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.TipoCambio))
 	currentWriteW += layout.tcW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.FecEmisionMod.String)
+	err = pdf.Text(sale.FecEmisionMod.String)
 	currentWriteW += layout.refComFec
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.CodigoTipoCDPMod.String)
+	err = pdf.Text(sale.CodigoTipoCDPMod.String)
 	currentWriteW += layout.refComTip
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.NumSerieCDPMod.String)
+	err = pdf.Text(sale.NumSerieCDPMod.String)
 	currentWriteW += layout.refComSer
 	pdf.SetXY(currentWriteW, rowMiddle)
-	pdf.Text(sale.NumCDPMod.String)
+	err = pdf.Text(sale.NumCDPMod.String)
 	return err
 }

@@ -206,7 +206,7 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
                 o.observaciones
         END AS observaciones
     FROM operaciones o   
-    ` + joinAndWhere + ` ORDER BY o.fecha_emision DESC `
+    ` + joinAndWhere + ` ORDER BY o.cuo ASC `
 	var rows pgx.Rows
 	if pagination.Pagination && pagination.Limit > 0 && pagination.Offset >= 0 {
 		query += `LIMIT $3 OFFSET $4`
