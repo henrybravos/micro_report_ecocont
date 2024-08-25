@@ -426,6 +426,7 @@ func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY
 	pdf.SetXY(currentWriteW, rowMiddle)
 	lenRazon := len(sale.RazonSocial)
 	if lenRazon > 40 {
+		pdf.SetXY(currentWriteW, rowMiddle-0.25)
 		err = pdf.SetFont("arial", "", 3)
 		rect = &gopdf.Rect{
 			H: layout.rowTableH * 3,
