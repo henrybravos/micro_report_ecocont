@@ -23,8 +23,10 @@ func main() {
 	}
 	defer dbConnection.Pool.Close()
 	salesRepo := repositories.NewSalesRepository(dbConnection)
+	businessRepo := repositories.NewBusinessRepository(dbConnection)
 	excelGenerator := report.NewExcelGenerator()
-	reportService := services.NewReportService(salesRepo, excelGenerator)
+	pdfGenerator := report.NewPdfGenerator()
+	reportService := services.NewReportService(salesRepo, businessRepo, excelGenerator, pdfGenerator)
 	reportHandler := handlers.NewReportHandler(reportService)
 	router := routes.SetupRouter(reportHandler)
 	log.Println("Server listening on port 8080")

@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/henrybravo/micro-report/internal/report"
 	"github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/internal/services"
 	"net/http"
@@ -20,10 +19,10 @@ func NewReportHandler(reportService *services.ReportService) *ReportHandler {
 }
 
 func (h *ReportHandler) GetSalesExcelReport(c *gin.Context) {
-	companyID := c.Query("companyID")
+	businessID := c.Query("businessID")
 	period := c.Query("period")
 
-	excelBuffer, err := h.ReportService.CreateExcelSales(companyID, period)
+	excelBuffer, err := h.ReportService.CreateExcelSales(businessID, period)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -50,7 +49,7 @@ func generateFileName(baseName, ext string) string {
 	return fmt.Sprintf("%s-%s.%s", baseName, currentDate.Format("20060102150405"), ext)
 }
 func (h *ReportHandler) GetSalesReportPaginated(c *gin.Context) {
-	companyID := c.Query("companyID")
+	businessID := c.Query("businessID")
 	period := c.Query("period")
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pageSize")
@@ -68,7 +67,7 @@ func (h *ReportHandler) GetSalesReportPaginated(c *gin.Context) {
 	// Calculate the offset for the database query
 	offset := (page - 1) * pageSize
 
-	sales, pagination, err := h.ReportService.CreateSalesPaginated(companyID, period, true, offset, pageSize)
+	sales, pagination, err := h.ReportService.CreateSalesPaginated(businessID, period, true, offset, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -86,10 +85,9 @@ func (h *ReportHandler) GetSalesReportPaginated(c *gin.Context) {
 }
 
 func (h *ReportHandler) GetSalesReportPDF(c *gin.Context) {
-	companyID := c.Query("companyID")
+	businessID := c.Query("businessID")
 	period := c.Query("period")
-	sales, _, err := h.ReportService.CreateSalesPaginated(companyID, period, false, 0, 0)
-	buffer, err := report.GeneratePDF(sales)
+	bufferPDF, err := h.ReportService.CreatePDFSales(businessID, period)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -98,9 +96,9 @@ func (h *ReportHandler) GetSalesReportPDF(c *gin.Context) {
 
 	c.Header("Content-Type", "application/pdf")
 	c.Header("Content-Disposition", fmt.Sprintf("inline; filename=%s", fileName))
-	c.Header("Content-Length", fmt.Sprintf("%d", buffer.Len()))
+	c.Header("Content-Length", fmt.Sprintf("%d", bufferPDF.Len()))
 
-	index, err := c.Writer.Write(buffer.Bytes())
+	index, err := c.Writer.Write(bufferPDF.Bytes())
 	if err != nil {
 		fmt.Println("Error writing response index", index)
 		c.JSON(500, gin.H{"error": err.Error()})

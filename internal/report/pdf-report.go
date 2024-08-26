@@ -8,7 +8,13 @@ import (
 	"log"
 )
 
-type Layout struct {
+type PdfGenerator struct{}
+
+func NewPdfGenerator() *PdfGenerator {
+	return &PdfGenerator{}
+}
+
+type layout struct {
 	marginX      float64
 	marginY      float64
 	headerPageH  float64
@@ -56,8 +62,8 @@ type Layout struct {
 	refComNum float64
 }
 
-func InitializeLayout() Layout {
-	return Layout{
+func (p *PdfGenerator) initializeLayout() layout {
+	return layout{
 
 		headerPageH:  2.0,
 		marginX:      0.5,
@@ -106,9 +112,9 @@ func InitializeLayout() Layout {
 		refComNum: 3.7 / 4,
 	}
 }
-func GeneratePDF(sales []repositories.SalesReport) (buffer *bytes.Buffer, err error) {
+func (p *PdfGenerator) GeneratePDF(business repositories.Business, sales []repositories.SalesReport, period string) (buffer *bytes.Buffer, err error) {
 	buffer = &bytes.Buffer{}
-	layout := InitializeLayout()
+	layout := p.initializeLayout()
 	pdf := gopdf.GoPdf{}
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4Landscape, Unit: gopdf.UnitCM})
 	err = pdf.AddTTFFont("arial", "./fonts/ARIAL.TTF")
@@ -117,10 +123,10 @@ func GeneratePDF(sales []repositories.SalesReport) (buffer *bytes.Buffer, err er
 		log.Print(err.Error())
 		return
 	}
-	err = generatePage(&pdf, layout)
+	err = generatePage(business, period, &pdf, layout)
 	for _, sale := range sales {
 		if pdf.GetY()+layout.rowTableH+layout.marginY > layout.pageH {
-			err = generatePage(&pdf, layout)
+			err = generatePage(business, period, &pdf, layout)
 		}
 		locationY := pdf.GetY() + layout.rowTableH
 		err = generateRowTable(&pdf, sale, locationY, layout)
@@ -139,16 +145,16 @@ func GeneratePDF(sales []repositories.SalesReport) (buffer *bytes.Buffer, err er
 	}
 	return
 }
-func generatePage(pdf *gopdf.GoPdf, layout Layout) error {
+func generatePage(business repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
 	pdf.AddPage()
 	pdf.SetXY(0, layout.marginY)
-	err := generateHeaderPage(pdf, layout)
+	err := generateHeaderPage(business, period, pdf, layout)
 	pdf.SetXY(layout.marginX, layout.headerPageH)
 	err = generateHeaderTable(pdf, layout)
 	pdf.SetXY(layout.marginX, layout.headerPageH+layout.headerTableH)
 	return err
 }
-func generateHeaderPage(pdf *gopdf.GoPdf, layout Layout) (err error) {
+func generateHeaderPage(business repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) (err error) {
 	err = pdf.SetFont("arialB", "", 6)
 	rect := &gopdf.Rect{
 		H: 0.5,
@@ -157,16 +163,16 @@ func generateHeaderPage(pdf *gopdf.GoPdf, layout Layout) (err error) {
 	cellOptionCenter := gopdf.CellOption{
 		Align: gopdf.Middle | gopdf.Center,
 	}
-	err = pdf.CellWithOption(rect, "ALTERNATIVAS CONTABLES S.R.L.", cellOptionCenter)
+	err = pdf.CellWithOption(rect, business.BusinessName, cellOptionCenter)
 	pdf.SetXY(0, 0.75)
-	err = pdf.CellWithOption(rect, "R.U.C.: 20602775683", cellOptionCenter)
+	err = pdf.CellWithOption(rect, "R.U.C.: "+business.RUC, cellOptionCenter)
 	pdf.SetXY(0, 1.25)
-	err = pdf.CellWithOption(rect, "AV. TUPAC AMARU NRO. 1158 BAR. MOLLEPAMPA - CAJAMARCA - CAJAMARCA - CAJAMARCA", cellOptionCenter)
+	err = pdf.CellWithOption(rect, business.Address, cellOptionCenter)
 	pdf.SetXY(0, 1.5)
-	err = pdf.CellWithOption(rect, "REGISTRO DE VENTAS DEL MES DE ENERO DE 2024", cellOptionCenter)
+	err = pdf.CellWithOption(rect, "REGISTRO DE VENTAS DEL MES DE "+period, cellOptionCenter)
 	return
 }
-func generateHeaderTable(pdf *gopdf.GoPdf, layout Layout) error {
+func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 	err := pdf.SetFont("arialB", "", 4.5)
 	cellOptionAllBorderCenter := gopdf.CellOption{
 		Border: gopdf.AllBorders,
@@ -377,7 +383,7 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout Layout) error {
 	err = pdf.CellWithOption(rect, "NÚMERO", cellOptionAllBorderCenter)
 	return err
 }
-func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY float64, layout Layout) error {
+func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY float64, layout layout) error {
 	err := pdf.SetFont("arial", "", 4.5)
 	rowMiddle := locationY + 2*layout.rowTableH/3
 	rowW := layout.pageW - layout.marginX*2
