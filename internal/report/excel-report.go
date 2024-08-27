@@ -3,10 +3,11 @@ package report
 import (
 	"bytes"
 	"fmt"
-	"github.com/henrybravo/micro-report/internal/repositories"
-	"github.com/xuri/excelize/v2"
 	"log"
 	"sync"
+
+	"github.com/henrybravo/micro-report/internal/repositories"
+	"github.com/xuri/excelize/v2"
 )
 
 type ExcelGenerator struct{}
@@ -21,7 +22,8 @@ type HeaderTitleCol struct {
 	title       string
 }
 
-func (e *ExcelGenerator) GenerateSalesReport(sales []repositories.SalesReport) (*bytes.Buffer, error) {
+func (e *ExcelGenerator) GenerateSalesReport(business repositories.Business, sales []repositories.SalesReport, period string) (*bytes.Buffer, error) {
+
 	f := excelize.NewFile()
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -37,6 +39,10 @@ func (e *ExcelGenerator) GenerateSalesReport(sales []repositories.SalesReport) (
 	f.SetActiveSheet(index)
 
 	if err := setSheetStyles(f, sheetName); err != nil {
+		return nil, err
+	}
+
+	if err := createTitle(f, business, period, sheetName); err != nil {
 		return nil, err
 	}
 
@@ -75,6 +81,89 @@ func setSheetStyles(f *excelize.File, sheetName string) error {
 	return nil
 }
 
+func createTitle(f *excelize.File, business repositories.Business, period string, sheetName string) error {
+	titleStyle, err := createTitleStyle(f)
+	if err != nil {
+		return err
+	}
+
+	businessName := fmt.Sprintf("%s\nR.U.C.:%s\n\n%s\nREGISTRO DE VENTAS DEL MES DE %s", business.BusinessName, business.RUC, business.Address, period)
+	if err := f.MergeCell(sheetName, "A1", "U1"); err != nil {
+		return err
+	}
+	if err := f.SetCellStyle(sheetName, "A1", "U1", titleStyle); err != nil {
+		return err
+	}
+	if err := f.SetCellStr(sheetName, "A1", businessName); err != nil {
+		return err
+	}
+	if err := f.SetRowHeight(sheetName, 1, 90); err != nil {
+		return err
+	}
+
+	// //ruc
+	// ruc := fmt.Sprintf("R.U.C: %s", business.RUC)
+	// if err := f.MergeCell(sheetName, "A2", "U2"); err != nil {
+	// 	return err
+	// }
+	// if err := f.SetCellStyle(sheetName, "A2", "U2", titleStyle); err != nil {
+	// 	return err
+	// }
+	// if err := f.SetCellStr(sheetName, "A2", ruc); err != nil {
+	// 	return err
+	// }
+
+	//dirección
+	// address := fmt.Sprintf(business.Address)
+	// if err := f.MergeCell(sheetName, "A4", "U4"); err != nil {
+	// 	return err
+	// }
+	// if err := f.SetCellStyle(sheetName, "A4", "U4", titleStyle); err != nil {
+	// 	return err
+	// }
+	// if err := f.SetCellStr(sheetName, "A4", address); err != nil {
+	// 	return err
+	// }
+
+	//subTitle
+	// subTitle := fmt.Sprintf("REGISTRO DE VENTAS DEL MES DE %s", period)
+	// if err := f.MergeCell(sheetName, "A5", "U5"); err != nil {
+	// 	return err
+	// }
+	// if err := f.SetCellStyle(sheetName, "A5", "U5", titleStyle); err != nil {
+	// 	return err
+	// }
+	// if err := f.SetCellStr(sheetName, "A5", subTitle); err != nil {
+	// 	return err
+	// }
+
+	return nil
+
+}
+
+// estilo para el título
+
+func createTitleStyle(f *excelize.File) (int, error) {
+	return f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:   true,
+			Size:   10,
+			Family: "Calibri",
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+			WrapText:   true,
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 0},
+			{Type: "top", Color: "000000", Style: 0},
+			{Type: "bottom", Color: "000000", Style: 0},
+			{Type: "right", Color: "000000", Style: 0},
+		},
+	})
+}
+
 func createHeaders(f *excelize.File, sheetName string) error {
 	headerStyle, err := createHeaderStyle(f)
 	if err != nil {
@@ -82,38 +171,39 @@ func createHeaders(f *excelize.File, sheetName string) error {
 	}
 
 	headers := []HeaderTitleCol{
-		{"A5", "A9", "CUO"},
-		{"B5", "F7", "COMPROBANTE DE PAGO O DOCUMENTO"},
-		{"B8", "B9", "FECHA DE EMISIÓN"},
-		{"C8", "C9", "FECHA DE VENCIMIENTO"},
-		{"D8", "D9", "TIPO"},
-		{"E8", "E9", "SERIE"},
-		{"F8", "F9", "NUMERO"},
-		{"G5", "I5", "INFORMACIÓN DEL CLIENTE"},
-		{"G6", "H7", "DOCUMENTO DE IDENTIDAD"},
-		{"G8", "G9", "TIPO"},
-		{"H8", "H9", "NÚMERO"},
-		{"I6", "I9", "APELLIDOS Y NOMBRES O RAZÓN SOCIAL"},
-		{"J5", "J9", "VALOR FACTURADO O DE EXPORTACIÓN"},
-		{"K5", "K9", "BASE IMPONIBLE DE LA OPERACIÓN GRAVADA"},
-		{"L5", "L9", "IGV Y/O IPM"},
-		{"M5", "N7", "VALOR TOTAL DE LA OPERACIÓN EXONERADA O INAFECTA"},
-		{"M8", "M9", "EXONERADA"},
-		{"N8", "N9", "INAFECTA"},
-		{"O5", "O9", "ISC"},
-		{"P5", "Q7", "OPERACIÓN GRAVADA CON EL IVAP"},
-		{"P8", "P9", "BASE IMPONIBLE"},
-		{"Q8", "Q9", "IVAP"},
-		{"R5", "R9", "ICBPER"},
-		{"S5", "S9", "OTROS TRIBUTOS Y CARGOS"},
-		{"T5", "T9", "IMPORTE TOTAL"},
-		{"U5", "U9", "TIPO DE CAMBIO"},
-		{"V5", "Y7", "REFERENCIA DEL COMPROBANTE DE PAGO O DOCUMENTO ORIGINAL QUE SE MODIFICA"},
-		{"V8", "V9", "FECHA"},
-		{"W8", "W9", "TIPO"},
-		{"X8", "X9", "SERIE"},
-		{"Y8", "Y9", "NÚMERO"},
+		{"A2", "A6", "CUO"},
+		{"B2", "F4", "COMPROBANTE DE PAGO O DOCUMENTO"},
+		{"B5", "B6", "FECHA DE EMISIÓN"},
+		{"C5", "C6", "FECHA DE VENCIMIENTO"},
+		{"D5", "D6", "TIPO"},
+		{"E5", "E6", "SERIE"},
+		{"F5", "F6", "NUMERO"},
+		{"G2", "I2", "INFORMACIÓN DEL CLIENTE"},
+		{"G3", "H4", "DOCUMENTO DE IDENTIDAD"},
+		{"G5", "G6", "TIPO"},
+		{"H5", "H6", "NÚMERO"},
+		{"I3", "I6", "APELLIDOS Y NOMBRES O RAZÓN SOCIAL"},
+		{"J2", "J6", "VALOR FACTURADO O DE EXPORTACIÓN"},
+		{"K2", "K6", "BASE IMPONIBLE DE LA OPERACIÓN GRAVADA"},
+		{"L2", "L6", "IGV Y/O IPM"},
+		{"M2", "N4", "VALOR TOTAL DE LA OPERACIÓN EXONERADA O INAFECTA"},
+		{"M5", "M6", "EXONERADA"},
+		{"N5", "N6", "INAFECTA"},
+		{"O2", "O6", "ISC"},
+		{"P2", "Q4", "OPERACIÓN GRAVADA CON EL IVAP"},
+		{"P5", "P6", "BASE IMPONIBLE"},
+		{"Q5", "Q6", "IVAP"},
+		{"R2", "R6", "ICBPER"},
+		{"S2", "S6", "OTROS TRIBUTOS Y CARGOS"},
+		{"T2", "T6", "IMPORTE TOTAL"},
+		{"U2", "U6", "TIPO DE CAMBIO"},
+		// {"V2", "Y4", "REFERENCIA DEL COMPROBANTE DE PAGO O DOCUMENTO ORIGINAL QUE SE MODIFICA"},
+		// {"V5", "V6", "FECHA"},
+		// {"W5", "W6", "TIPO"},
+		// {"X5", "X6", "SERIE"},
+		// {"Y5", "Y6", "NÚMERO"},
 	}
+
 	for _, header := range headers {
 		if err := createHeaderTitle(f, headerStyle, sheetName, header); err != nil {
 			return err
@@ -136,8 +226,9 @@ func createHeaderStyle(f *excelize.File) (int, error) {
 		WrapText:   true,
 	}
 	fontStyle := &excelize.Font{
-		Family: "Arial Narrow",
+		Family: "Calibri",
 		Size:   8,
+		Bold:   true,
 	}
 	return f.NewStyle(&excelize.Style{
 		Alignment: alignmentStyle,
@@ -171,7 +262,7 @@ func fillSalesData(f *excelize.File, sheetName string, sales []repositories.Sale
 		rowCh <- struct {
 			row  int
 			sale repositories.SalesReport
-		}{row: index + 10, sale: sale}
+		}{row: index + 7, sale: sale}
 	}
 	close(rowCh)
 
@@ -180,6 +271,13 @@ func fillSalesData(f *excelize.File, sheetName string, sales []repositories.Sale
 }
 
 func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.SalesReport) error {
+
+	numericStyle, err := createNumericStyle(f)
+
+	if err != nil {
+		log.Fatalf("Failed to create numeric style: %v", err)
+	}
+
 	fechaEmisionStr := sale.FechaEmision.Time.Format("02/01/2006")
 	fechaVencimientoStr := ""
 	if sale.FechaVencimiento.Valid {
@@ -207,8 +305,35 @@ func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.
 			return err
 		}
 	}
+	// for _, cell := range cells {
+	// 	value := cell.val
+	// 	if num, ok := value.(float64); ok && num == 0 {
+	// 		value = ""
+	// 	}
+	// 	if err := f.SetCellValue(sheetName, fmt.Sprintf("%s%d", cell.col, row), value); err != nil {
+	// 		log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
+	// 		return err
+	// 	}
+	// }
 
 	return nil
+}
+
+func createNumericStyle(f *excelize.File) (int, error) {
+	style, err := f.NewStyle(&excelize.Style{
+		NumFmt: 14, // Utiliza uno de los formatos numéricos estándar de Excel o define un formato personalizado
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+		},
+		Font: &excelize.Font{
+			Family: "Calibri",
+			Size:   10,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return style, nil
 }
 
 func createHeaderTitle(f *excelize.File, style int, sheetName string, props HeaderTitleCol) error {

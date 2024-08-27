@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+
 	"github.com/henrybravo/micro-report/internal/report"
 	repo "github.com/henrybravo/micro-report/internal/repositories"
 )
@@ -37,11 +38,12 @@ func (s *ReportService) CreateSalesPaginated(businessID, period string, isPagina
 	return sales, pagination, nil
 }
 func (s *ReportService) CreateExcelSales(businessID, period string) (*bytes.Buffer, error) {
+	business, err := s.businessRepo.GetBusinessByID(businessID)
 	sales, _, err := s.salesRepo.GetSalesReports(businessID, period, repo.PaginationParams{Pagination: false})
 	if err != nil {
 		return nil, err
 	}
-	excel, err := s.excelGenerator.GenerateSalesReport(sales)
+	excel, err := s.excelGenerator.GenerateSalesReport(*business, sales, period)
 	if err != nil {
 		return nil, err
 	}
