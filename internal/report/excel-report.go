@@ -309,8 +309,14 @@ func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.
 	for _, cell := range cells {
 		cellRef := fmt.Sprintf("%s%d", cell.col, row)
 		value := cell.val
-		if num, ok := value.(float64); ok && num == 0 {
-			value = ""
+		if cell.col == "U" {
+			if num, ok := value.(float64); ok && num == 1 {
+				value = ""
+			}
+		} else {
+			if num, ok := value.(float64); ok && num == 0 {
+				value = ""
+			}
 		}
 		if err := f.SetCellValue(sheetName, cellRef, value); err != nil {
 			log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
@@ -343,7 +349,7 @@ func addTotalRow(f *excelize.File, sheetName string, row int) error {
 			Family: "Arial Narrow",
 		},
 		Alignment: &excelize.Alignment{
-			Horizontal: "left",
+			Horizontal: "right",
 		},
 	})
 	if err != nil {
@@ -376,7 +382,7 @@ func addTotalRow(f *excelize.File, sheetName string, row int) error {
 		col string
 		val string
 	}{
-		{"A", "*"}, {"I", "TOTAL"}, {"J", fmt.Sprintf("SUM(J7:J%d)", row-1)},
+		{"I", "TOTAL"}, {"J", fmt.Sprintf("SUM(J7:J%d)", row-1)},
 		{"K", fmt.Sprintf("SUM(K7:K%d)", row-1)}, {"L", fmt.Sprintf("SUM(L7:L%d)", row-1)},
 		{"M", fmt.Sprintf("SUM(M7:M%d)", row-1)}, {"N", fmt.Sprintf("SUM(N7:N%d)", row-1)},
 		{"O", fmt.Sprintf("SUM(O7:O%d)", row-1)}, {"P", fmt.Sprintf("SUM(P7:P%d)", row-1)},
