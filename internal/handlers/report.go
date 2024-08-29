@@ -52,8 +52,6 @@ func (h *ReportHandler) GetSalesExcelReport(c *gin.Context) {
 
 }
 func generateFileName(baseName, ext string) string {
-	//currentDate := time.Now()
-	//return fmt.Sprintf("%s-%s.%s", baseName, currentDate.Format("20060102150405"), ext)
 	return fmt.Sprintf(baseName + "." + ext)
 }
 func (h *ReportHandler) GetSalesReportPaginated(c *gin.Context) {

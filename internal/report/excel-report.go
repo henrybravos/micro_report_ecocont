@@ -31,14 +31,16 @@ func (e *ExcelGenerator) GenerateSalesReport(business repositories.Business, sal
 		}
 	}()
 
+	// Renombra la hoja por defecto a "Reporte_de_ventas"
+	defaultSheetName := f.GetSheetName(0)
 	sheetName := "Reporte_de_ventas"
-	index, err := f.NewSheet(sheetName)
-	if err != nil {
-		return nil, err
-	}
-	f.SetActiveSheet(index)
+	f.SetSheetName(defaultSheetName, sheetName)
 
-	if err := setSheetStyles(f, sheetName); err != nil {
+	f.SetActiveSheet(0)
+
+	lastRow := len(sales) + 7 // 7 es el número de filas de encabezado
+
+	if err := setSheetStyles(f, sheetName, lastRow); err != nil {
 		return nil, err
 	}
 
@@ -50,8 +52,7 @@ func (e *ExcelGenerator) GenerateSalesReport(business repositories.Business, sal
 		return nil, err
 	}
 
-	lastRow, err := fillSalesData(f, sheetName, sales)
-	if err != nil {
+	if err := fillSalesData(f, sheetName, sales); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +67,7 @@ func (e *ExcelGenerator) GenerateSalesReport(business repositories.Business, sal
 	return buff, nil
 }
 
-func setSheetStyles(f *excelize.File, sheetName string) error {
+func setSheetStyles(f *excelize.File, sheetName string, lastRow int) error {
 	//quitar cuadrícula a la hoja
 	showGridLines := false
 	if err := f.SetSheetView(sheetName, 0, &excelize.ViewOptions{
@@ -90,6 +91,10 @@ func setSheetStyles(f *excelize.File, sheetName string) error {
 		if err := f.SetColWidth(sheetName, col.col, col.col, col.width); err != nil {
 			return err
 		}
+	}
+
+	if err := setSalesRowStyle(f, sheetName, lastRow); err != nil {
+		return nil
 	}
 
 	return nil
@@ -222,7 +227,7 @@ func createHeaderStyle(f *excelize.File) (int, error) {
 	})
 }
 
-func fillSalesData(f *excelize.File, sheetName string, sales []repositories.SalesReport) (int, error) {
+func fillSalesData(f *excelize.File, sheetName string, sales []repositories.SalesReport) error {
 	var wg sync.WaitGroup
 	rowCh := make(chan struct {
 		row  int
@@ -252,10 +257,10 @@ func fillSalesData(f *excelize.File, sheetName string, sales []repositories.Sale
 	close(rowCh)
 
 	wg.Wait()
-	return len(sales) + 7, nil
+	return nil
 }
 
-func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.SalesReport) error {
+func setSalesRowStyle(f *excelize.File, sheetName string, lastRow int) error {
 	exp := "#,##0.00_);(#,##0.00)"
 	// Define la configuración de la fuente
 	fontConfig := &excelize.Font{
@@ -272,6 +277,61 @@ func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.
 	fontStyle, _ := f.NewStyle(&excelize.Style{
 		Font: fontConfig,
 	})
+
+	totalRowStyle, rightAlignStyle, err := setTotalRowStyle(f)
+
+	if err != nil {
+		return err
+	}
+
+	// Define un slice con las columnas que deben usar el numberStyle
+	numberStyleColumns := []string{"J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"}
+
+	// Convierte el slice a un mapa para una búsqueda rápida
+	numberStyleMap := make(map[string]bool)
+	for _, col := range numberStyleColumns {
+		numberStyleMap[col] = true
+	}
+
+	// Aplica el estilo correspondiente a cada celda en numberStyleColumns
+	for _, col := range numberStyleColumns {
+		startCell := fmt.Sprintf("%s7", col)
+		endCell := fmt.Sprintf("%s%d", col, lastRow)
+		if err := f.SetCellStyle(sheetName, startCell, endCell, numberStyle); err != nil {
+			log.Printf("Error al establecer el estilo en la columna %s: %s", col, err.Error())
+			return err
+		}
+	}
+
+	// Aplica el estilo de fuente a las columnas de "A" a "Y" excepto las que están en numberStyleColumns
+	for col := 'A'; col <= 'Y'; col++ {
+		colStr := string(col)
+		if !numberStyleMap[colStr] {
+			startCell := fmt.Sprintf("%s7", colStr)
+			endCell := fmt.Sprintf("%s%d", colStr, lastRow)
+			if err := f.SetCellStyle(sheetName, startCell, endCell, fontStyle); err != nil {
+				log.Printf("Error al establecer el estilo en la columna %s: %s", colStr, err.Error())
+				return err
+			}
+		}
+	}
+
+	// Aplica el estilo de alineamiento a la derecha a la columna "I" en la fila de totales
+	if err := f.SetCellStyle(sheetName, fmt.Sprintf("I%d", lastRow), fmt.Sprintf("I%d", lastRow), rightAlignStyle); err != nil {
+		log.Printf("Error al establecer el estilo de alineamiento a la derecha en la columna I: %s", err.Error())
+		return err
+	}
+
+	// Aplica el estilo a la fila de totales
+	if err := f.SetCellStyle(sheetName, fmt.Sprintf("J%d", lastRow), fmt.Sprintf("T%d", lastRow), totalRowStyle); err != nil {
+		log.Printf("Error al establecer el estilo en la fila de totales: %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.SalesReport) error {
 
 	fechaEmisionStr := sale.FechaEmision.Time.Format("02/01/2006")
 	fechaVencimientoStr := ""
@@ -294,18 +354,6 @@ func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.
 		{"X", sale.NumSerieCDPMod.String}, {"Y", sale.NumCDPMod.String},
 	}
 
-	// for _, cell := range cells {
-	// 	if err := f.SetCellValue(sheetName, fmt.Sprintf("%s%d", cell.col, row), cell.val); err != nil {
-	// 		log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
-	// 		return err
-	// 	}
-	// }
-	// Define un mapa con las columnas que deben usar el numberStyle
-	numberStyleColumns := map[string]bool{
-		"J": true, "K": true,
-		"L": true, "M": true, "N": true, "O": true, "P": true, "Q": true, "R": true, "S": true, "T": true,
-	}
-
 	for _, cell := range cells {
 		cellRef := fmt.Sprintf("%s%d", cell.col, row)
 		value := cell.val
@@ -322,60 +370,12 @@ func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.
 			log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
 			return err
 		}
-		// Aplica el estilo correspondiente a cada celda
-		if _, ok := numberStyleColumns[cell.col]; ok {
-			if err := f.SetCellStyle(sheetName, cellRef, cellRef, numberStyle); err != nil {
-				log.Printf("Error al establecer el estilo en la celda %s: %s", cell.col, err.Error())
-				return err
-			}
-		} else {
-			if err := f.SetCellStyle(sheetName, cellRef, cellRef, fontStyle); err != nil {
-				log.Printf("Error al establecer el estilo en la celda %s: %s", cell.col, err.Error())
-				return err
-			}
-		}
-
 	}
 
 	return nil
 }
 
 func addTotalRow(f *excelize.File, sheetName string, row int) error {
-	// Define el estilo personalizado para la fila de totales
-	totalStyle, err := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{
-			Bold:   true,
-			Size:   8,
-			Family: "Arial Narrow",
-		},
-		Alignment: &excelize.Alignment{
-			Horizontal: "right",
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	// Define el estilo personalizado para los números
-	exp := "#,##0.00;-#,##0.00;0"
-	numberStyle, err := f.NewStyle(&excelize.Style{
-		CustomNumFmt: &exp,
-		Alignment: &excelize.Alignment{
-			Horizontal: "right",
-		},
-		Font: &excelize.Font{
-			Bold:   true,
-			Family: "Arial Narrow",
-			Size:   8,
-		},
-		Border: []excelize.Border{
-			{Type: "top", Style: 1, Color: "000000"},
-			{Type: "bottom", Style: 6, Color: "000000"},
-		},
-	})
-	if err != nil {
-		return err
-	}
 
 	// Define las celdas y sus fórmulas
 	cells := []struct {
@@ -390,27 +390,54 @@ func addTotalRow(f *excelize.File, sheetName string, row int) error {
 		{"S", fmt.Sprintf("SUM(S7:S%d)", row-1)}, {"T", fmt.Sprintf("SUM(T7:T%d)", row-1)},
 	}
 
-	// Establece los valores y aplica el estilo a las celdas
+	// Establece los valores las celdas
 	for _, cell := range cells {
 		cellRef := fmt.Sprintf("%s%d", cell.col, row)
-		if cell.col == "A" || cell.col == "I" {
+		if cell.col == "I" {
 			if err := f.SetCellValue(sheetName, cellRef, cell.val); err != nil {
-				return err
-			}
-			if err := f.SetCellStyle(sheetName, cellRef, cellRef, totalStyle); err != nil {
 				return err
 			}
 		} else {
 			if err := f.SetCellFormula(sheetName, cellRef, cell.val); err != nil {
 				return err
 			}
-			if cell.val != "0" {
-				if err := f.SetCellStyle(sheetName, cellRef, cellRef, numberStyle); err != nil {
-					return err
-				}
-			}
 		}
 	}
 
 	return nil
+}
+
+func setTotalRowStyle(f *excelize.File) (int, int, error) {
+	// Define el estilo de fuente común
+	fontStyle := &excelize.Font{
+		Bold:   true,
+		Size:   8,
+		Family: "Arial Narrow",
+	}
+
+	// Define el estilo personalizado para la fila de totales
+	totalStyle, err := f.NewStyle(&excelize.Style{
+		Font: fontStyle,
+		Border: []excelize.Border{
+			{Type: "top", Style: 1, Color: "000000"},
+			{Type: "bottom", Style: 6, Color: "000000"},
+		},
+	})
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// Define el estilo de alineación a la derecha
+	rightAlignStyle, err := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+			Vertical:   "center",
+		},
+		Font: fontStyle,
+	})
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return totalStyle, rightAlignStyle, nil
 }

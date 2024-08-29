@@ -58,7 +58,7 @@ func (s *ReportService) CreateExcelSales(businessID, period string) (*bytes.Buff
 }
 func (s *ReportService) CreatePDFSales(businessID, period string) (*bytes.Buffer, error) {
 	start := time.Now()
-	business, _ := s.businessRepo.GetBusinessByID(businessID)
+	business, err := s.businessRepo.GetBusinessByID(businessID)
 	sales, _, err := s.salesRepo.GetSalesReports(businessID, period, repo.PaginationParams{Pagination: false})
 	duration := time.Since(start)
 	fmt.Printf("Consulta a la base de datos completada en %v, total: %d items\n", duration, len(sales))
