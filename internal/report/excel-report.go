@@ -50,9 +50,15 @@ func (e *ExcelGenerator) GenerateSalesReport(business repositories.Business, sal
 		return nil, err
 	}
 
-	if err := fillSalesData(f, sheetName, sales); err != nil {
+	lastRow, err := fillSalesData(f, sheetName, sales)
+	if err != nil {
 		return nil, err
 	}
+
+	if err := addTotalRow(f, sheetName, lastRow); err != nil {
+		return nil, err
+	}
+
 	buff, err := f.WriteToBuffer()
 	if err != nil {
 		return nil, err
@@ -61,6 +67,14 @@ func (e *ExcelGenerator) GenerateSalesReport(business repositories.Business, sal
 }
 
 func setSheetStyles(f *excelize.File, sheetName string) error {
+	//quitar cuadrícula a la hoja
+	showGridLines := false
+	if err := f.SetSheetView(sheetName, 0, &excelize.ViewOptions{
+		ShowGridLines: &showGridLines,
+	}); err != nil {
+		return err
+	}
+
 	columns := []struct {
 		col   string
 		width float64
@@ -68,7 +82,7 @@ func setSheetStyles(f *excelize.File, sheetName string) error {
 		{"A", 14}, {"B", 14}, {"C", 14}, {"D", 5}, {"E", 6},
 		{"F", 7}, {"G", 5}, {"H", 13}, {"I", 43}, {"J", 10},
 		{"K", 12}, {"L", 9}, {"M", 13}, {"N", 11}, {"O", 5},
-		{"P", 7}, {"Q", 6}, {"R", 7}, {"S", 8}, {"T", 11},
+		{"P", 10}, {"Q", 6}, {"R", 7}, {"S", 8}, {"T", 11},
 		{"U", 6}, {"V", 10}, {"W", 6}, {"X", 7}, {"Y", 10},
 	}
 
@@ -87,68 +101,29 @@ func createTitle(f *excelize.File, business repositories.Business, period string
 		return err
 	}
 
-	businessName := fmt.Sprintf("%s\nR.U.C.:%s\n\n%s\nREGISTRO DE VENTAS DEL MES DE %s", business.BusinessName, business.RUC, business.Address, period)
-	if err := f.MergeCell(sheetName, "A1", "U1"); err != nil {
+	businessName := fmt.Sprintf("%s\nR.U.C.:%s\n%s\nREGISTRO DE VENTAS DEL MES DE %s", business.BusinessName, business.RUC, business.Address, period)
+	if err := f.MergeCell(sheetName, "A1", "Y1"); err != nil {
 		return err
 	}
-	if err := f.SetCellStyle(sheetName, "A1", "U1", titleStyle); err != nil {
+	if err := f.SetCellStyle(sheetName, "A1", "Y1", titleStyle); err != nil {
 		return err
 	}
 	if err := f.SetCellStr(sheetName, "A1", businessName); err != nil {
 		return err
 	}
-	if err := f.SetRowHeight(sheetName, 1, 90); err != nil {
+	if err := f.SetRowHeight(sheetName, 1, 80); err != nil {
 		return err
 	}
 
-	// //ruc
-	// ruc := fmt.Sprintf("R.U.C: %s", business.RUC)
-	// if err := f.MergeCell(sheetName, "A2", "U2"); err != nil {
-	// 	return err
-	// }
-	// if err := f.SetCellStyle(sheetName, "A2", "U2", titleStyle); err != nil {
-	// 	return err
-	// }
-	// if err := f.SetCellStr(sheetName, "A2", ruc); err != nil {
-	// 	return err
-	// }
-
-	//dirección
-	// address := fmt.Sprintf(business.Address)
-	// if err := f.MergeCell(sheetName, "A4", "U4"); err != nil {
-	// 	return err
-	// }
-	// if err := f.SetCellStyle(sheetName, "A4", "U4", titleStyle); err != nil {
-	// 	return err
-	// }
-	// if err := f.SetCellStr(sheetName, "A4", address); err != nil {
-	// 	return err
-	// }
-
-	//subTitle
-	// subTitle := fmt.Sprintf("REGISTRO DE VENTAS DEL MES DE %s", period)
-	// if err := f.MergeCell(sheetName, "A5", "U5"); err != nil {
-	// 	return err
-	// }
-	// if err := f.SetCellStyle(sheetName, "A5", "U5", titleStyle); err != nil {
-	// 	return err
-	// }
-	// if err := f.SetCellStr(sheetName, "A5", subTitle); err != nil {
-	// 	return err
-	// }
-
 	return nil
-
 }
-
-// estilo para el título
 
 func createTitleStyle(f *excelize.File) (int, error) {
 	return f.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold:   true,
-			Size:   10,
-			Family: "Calibri",
+			Size:   11,
+			Family: "Arial Narrow",
 		},
 		Alignment: &excelize.Alignment{
 			Horizontal: "center",
@@ -197,11 +172,11 @@ func createHeaders(f *excelize.File, sheetName string) error {
 		{"S2", "S6", "OTROS TRIBUTOS Y CARGOS"},
 		{"T2", "T6", "IMPORTE TOTAL"},
 		{"U2", "U6", "TIPO DE CAMBIO"},
-		// {"V2", "Y4", "REFERENCIA DEL COMPROBANTE DE PAGO O DOCUMENTO ORIGINAL QUE SE MODIFICA"},
-		// {"V5", "V6", "FECHA"},
-		// {"W5", "W6", "TIPO"},
-		// {"X5", "X6", "SERIE"},
-		// {"Y5", "Y6", "NÚMERO"},
+		{"V2", "Y4", "REFERENCIA DEL COMPROBANTE DE PAGO O DOCUMENTO ORIGINAL QUE SE MODIFICA"},
+		{"V5", "V6", "FECHA"},
+		{"W5", "W6", "TIPO"},
+		{"X5", "X6", "SERIE"},
+		{"Y5", "Y6", "NÚMERO"},
 	}
 
 	for _, header := range headers {
@@ -211,6 +186,16 @@ func createHeaders(f *excelize.File, sheetName string) error {
 	}
 
 	return nil
+}
+
+func createHeaderTitle(f *excelize.File, style int, sheetName string, props HeaderTitleCol) error {
+	if err := f.MergeCell(sheetName, props.topLeft, props.bottomRight); err != nil {
+		return err
+	}
+	if err := f.SetCellStyle(sheetName, props.topLeft, props.bottomRight, style); err != nil {
+		return err
+	}
+	return f.SetCellStr(sheetName, props.topLeft, props.title)
 }
 
 func createHeaderStyle(f *excelize.File) (int, error) {
@@ -226,9 +211,9 @@ func createHeaderStyle(f *excelize.File) (int, error) {
 		WrapText:   true,
 	}
 	fontStyle := &excelize.Font{
-		Family: "Calibri",
-		Size:   8,
-		Bold:   true,
+		Family: "Arial Narrow",
+		Size:   7.5,
+		Bold:   false,
 	}
 	return f.NewStyle(&excelize.Style{
 		Alignment: alignmentStyle,
@@ -237,7 +222,7 @@ func createHeaderStyle(f *excelize.File) (int, error) {
 	})
 }
 
-func fillSalesData(f *excelize.File, sheetName string, sales []repositories.SalesReport) error {
+func fillSalesData(f *excelize.File, sheetName string, sales []repositories.SalesReport) (int, error) {
 	var wg sync.WaitGroup
 	rowCh := make(chan struct {
 		row  int
@@ -267,16 +252,26 @@ func fillSalesData(f *excelize.File, sheetName string, sales []repositories.Sale
 	close(rowCh)
 
 	wg.Wait()
-	return nil
+	return len(sales) + 7, nil
 }
 
 func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.SalesReport) error {
-
-	numericStyle, err := createNumericStyle(f)
-
-	if err != nil {
-		log.Fatalf("Failed to create numeric style: %v", err)
+	exp := "#,##0.00_);(#,##0.00)"
+	// Define la configuración de la fuente
+	fontConfig := &excelize.Font{
+		Family: "Arial Narrow",
+		Size:   8,
 	}
+
+	numberStyle, _ := f.NewStyle(&excelize.Style{
+		CustomNumFmt: &exp,
+		Font:         fontConfig,
+	})
+
+	// Define el estilo de solo fuente
+	fontStyle, _ := f.NewStyle(&excelize.Style{
+		Font: fontConfig,
+	})
 
 	fechaEmisionStr := sale.FechaEmision.Time.Format("02/01/2006")
 	fechaVencimientoStr := ""
@@ -299,49 +294,117 @@ func setSalesRow(f *excelize.File, sheetName string, row int, sale repositories.
 		{"X", sale.NumSerieCDPMod.String}, {"Y", sale.NumCDPMod.String},
 	}
 
-	for _, cell := range cells {
-		if err := f.SetCellValue(sheetName, fmt.Sprintf("%s%d", cell.col, row), cell.val); err != nil {
-			log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
-			return err
-		}
-	}
 	// for _, cell := range cells {
-	// 	value := cell.val
-	// 	if num, ok := value.(float64); ok && num == 0 {
-	// 		value = ""
-	// 	}
-	// 	if err := f.SetCellValue(sheetName, fmt.Sprintf("%s%d", cell.col, row), value); err != nil {
+	// 	if err := f.SetCellValue(sheetName, fmt.Sprintf("%s%d", cell.col, row), cell.val); err != nil {
 	// 		log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
 	// 		return err
 	// 	}
 	// }
+	// Define un mapa con las columnas que deben usar el numberStyle
+	numberStyleColumns := map[string]bool{
+		"J": true, "K": true,
+		"L": true, "M": true, "N": true, "O": true, "P": true, "Q": true, "R": true, "S": true, "T": true,
+	}
+
+	for _, cell := range cells {
+		cellRef := fmt.Sprintf("%s%d", cell.col, row)
+		value := cell.val
+		if num, ok := value.(float64); ok && num == 0 {
+			value = ""
+		}
+		if err := f.SetCellValue(sheetName, cellRef, value); err != nil {
+			log.Printf("Error al establecer el valor en la celda %s: %s", cell.col, err.Error())
+			return err
+		}
+		// Aplica el estilo correspondiente a cada celda
+		if _, ok := numberStyleColumns[cell.col]; ok {
+			if err := f.SetCellStyle(sheetName, cellRef, cellRef, numberStyle); err != nil {
+				log.Printf("Error al establecer el estilo en la celda %s: %s", cell.col, err.Error())
+				return err
+			}
+		} else {
+			if err := f.SetCellStyle(sheetName, cellRef, cellRef, fontStyle); err != nil {
+				log.Printf("Error al establecer el estilo en la celda %s: %s", cell.col, err.Error())
+				return err
+			}
+		}
+
+	}
 
 	return nil
 }
 
-func createNumericStyle(f *excelize.File) (int, error) {
-	style, err := f.NewStyle(&excelize.Style{
-		NumFmt: 14, // Utiliza uno de los formatos numéricos estándar de Excel o define un formato personalizado
+func addTotalRow(f *excelize.File, sheetName string, row int) error {
+	// Define el estilo personalizado para la fila de totales
+	totalStyle, err := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:   true,
+			Size:   8,
+			Family: "Arial Narrow",
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "left",
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Define el estilo personalizado para los números
+	exp := "#,##0.00;-#,##0.00;0"
+	numberStyle, err := f.NewStyle(&excelize.Style{
+		CustomNumFmt: &exp,
 		Alignment: &excelize.Alignment{
 			Horizontal: "right",
 		},
 		Font: &excelize.Font{
-			Family: "Calibri",
-			Size:   10,
+			Bold:   true,
+			Family: "Arial Narrow",
+			Size:   8,
+		},
+		Border: []excelize.Border{
+			{Type: "top", Style: 1, Color: "000000"},
+			{Type: "bottom", Style: 6, Color: "000000"},
 		},
 	})
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return style, nil
-}
 
-func createHeaderTitle(f *excelize.File, style int, sheetName string, props HeaderTitleCol) error {
-	if err := f.MergeCell(sheetName, props.topLeft, props.bottomRight); err != nil {
-		return err
+	// Define las celdas y sus fórmulas
+	cells := []struct {
+		col string
+		val string
+	}{
+		{"A", "*"}, {"I", "TOTAL"}, {"J", fmt.Sprintf("SUM(J7:J%d)", row-1)},
+		{"K", fmt.Sprintf("SUM(K7:K%d)", row-1)}, {"L", fmt.Sprintf("SUM(L7:L%d)", row-1)},
+		{"M", fmt.Sprintf("SUM(M7:M%d)", row-1)}, {"N", fmt.Sprintf("SUM(N7:N%d)", row-1)},
+		{"O", fmt.Sprintf("SUM(O7:O%d)", row-1)}, {"P", fmt.Sprintf("SUM(P7:P%d)", row-1)},
+		{"Q", fmt.Sprintf("SUM(Q7:Q%d)", row-1)}, {"R", fmt.Sprintf("SUM(R7:R%d)", row-1)},
+		{"S", fmt.Sprintf("SUM(S7:S%d)", row-1)}, {"T", fmt.Sprintf("SUM(T7:T%d)", row-1)},
 	}
-	if err := f.SetCellStyle(sheetName, props.topLeft, props.bottomRight, style); err != nil {
-		return err
+
+	// Establece los valores y aplica el estilo a las celdas
+	for _, cell := range cells {
+		cellRef := fmt.Sprintf("%s%d", cell.col, row)
+		if cell.col == "A" || cell.col == "I" {
+			if err := f.SetCellValue(sheetName, cellRef, cell.val); err != nil {
+				return err
+			}
+			if err := f.SetCellStyle(sheetName, cellRef, cellRef, totalStyle); err != nil {
+				return err
+			}
+		} else {
+			if err := f.SetCellFormula(sheetName, cellRef, cell.val); err != nil {
+				return err
+			}
+			if cell.val != "0" {
+				if err := f.SetCellStyle(sheetName, cellRef, cellRef, numberStyle); err != nil {
+					return err
+				}
+			}
+		}
 	}
-	return f.SetCellStr(sheetName, props.topLeft, props.title)
+
+	return nil
 }

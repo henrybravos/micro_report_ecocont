@@ -89,41 +89,34 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
 	// Count total records
 	var totalCount int
 	joinAndWhere := `
-		 INNER JOIN personas p ON o.persona_asociado_id = p.id
-        INNER JOIN ventas v ON o.id = v.operacion_id
-        INNER JOIN t_tipo_operacion tto ON o.tipo_operacion = tto.id
-        INNER JOIN t_comprobantes tco ON o.comprobante_id = tco.id
-        INNER JOIN t_documentos td ON p.documento_id = td.id
-        INNER JOIN t_monedas tmo ON o.moneda_id = tmo.id
-        LEFT JOIN t_comprobantes tico ON v.tipo_cdpm = tico.id
-        INNER JOIN locales l ON l.id = o.local_id
-        INNER JOIN empresas e ON e.id = l.empresa_id
-        WHERE o.periodo = $2
-          AND e.id = $1
-          AND v.estado_cpe <> '4'
-          AND o.comprobante_id::text <> ALL(ARRAY['a6062ae0-15a4-11ec-8fec-77a5f80a0a28', '1daedb70-a779-11eb-84c1-40b0344a6892', '1daeb476-a779-11eb-84b8-40b0344a6892'])
-          AND o.tipo_operacion::text <> ALL(ARRAY['59133fcb-a77a-11eb-8918-40b0344a6892', 
-                  '59133fcc-a77a-11eb-8919-40b0344a6892', '5913b410-a77a-11eb-8934-40b0344a6892',
-                  '59136634-a77a-11eb-891c-40b0344a6892', '59136635-a77a-11eb-891d-40b0344a6892',
-                  '59138d1a-a77a-11eb-8925-40b0344a6892', '59138d1e-a77a-11eb-8929-40b0344a6892',
-                  '59138d21-a77a-11eb-892c-40b0344a6892', '59138d23-a77a-11eb-892e-40b0344a6892',
-                  '5913b40e-a77a-11eb-8932-40b0344a6892', '5913b40f-a77a-11eb-8933-40b0344a6892',
-                  '59136632-a77a-11eb-891a-40b0344a6892'])
-          AND o.deleted_at IS NULL
-          AND o.referencia_id IS NULL `
+     INNER JOIN personas p ON o.persona_asociado_id = p.id
+	INNER JOIN ventas v ON o.id = v.operacion_id
+	INNER JOIN t_tipo_operacion tto ON o.tipo_operacion = tto.id
+	INNER JOIN t_comprobantes tco ON o.comprobante_id = tco.id
+	INNER JOIN t_documentos td ON p.documento_id = td.id
+	INNER JOIN t_monedas tmo ON o.moneda_id = tmo.id
+	LEFT JOIN t_comprobantes tico ON v.tipo_cdpm = tico.id
+	INNER JOIN locales l ON l.id = o.local_id
+	INNER JOIN empresas e ON e.id = l.empresa_id
+	WHERE o.periodo = $2
+	  AND e.id = $1
+	  AND v.estado_cpe <> '4'
+	  AND o.comprobante_id NOT IN ('a6062ae0-15a4-11ec-8fec-77a5f80a0a28', '1daedb70-a779-11eb-84c1-40b0344a6892', '1daeb476-a779-11eb-84b8-40b0344a6892')
+	  AND o.tipo_operacion NOT IN ('59133fcb-a77a-11eb-8918-40b0344a6892', '59133fcc-a77a-11eb-8919-40b0344a6892', '5913b410-a77a-11eb-8934-40b0344a6892', '59136634-a77a-11eb-891c-40b0344a6892', '59136635-a77a-11eb-891d-40b0344a6892', '59138d1a-a77a-11eb-8925-40b0344a6892', '59138d1e-a77a-11eb-8929-40b0344a6892', '59138d21-a77a-11eb-892c-40b0344a6892', '59138d23-a77a-11eb-892e-40b0344a6892', '5913b40e-a77a-11eb-8932-40b0344a6892', '5913b40f-a77a-11eb-8933-40b0344a6892', '59136632-a77a-11eb-891a-40b0344a6892')
+	  AND o.deleted_at IS NULL
+	  AND o.referencia_id IS NULL `
 
 	countQuery := `
         SELECT COUNT(*)
         FROM operaciones o 
         ` + joinAndWhere
-
-	err := r.Connection.Pool.QueryRow(context.Background(), countQuery, companyID, period).Scan(&totalCount)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	totalPages := 0
-	if pagination.Limit > 0 {
+
+	if pagination.Pagination && pagination.Limit > 0 && pagination.Offset >= 0 {
+		err := r.Connection.Pool.QueryRow(context.Background(), countQuery, companyID, period).Scan(&totalCount)
+		if err != nil {
+			return nil, nil, err
+		}
 		totalPages = (totalCount + pagination.Limit - 1) / pagination.Limit
 	}
 
@@ -201,13 +194,14 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
         v.icbper,
         v.icbper AS "mtoIcbp",
         v.estado_cpe,
-        CASE
-            WHEN e.ruc = '10095595761' OR e.ruc = '20523537009' OR e.ruc = '10093714135' OR e.ruc = '20601613884' THEN
-                o.observaciones
-        END AS observaciones
+         CASE
+			WHEN e.ruc IN ('10095595761', '20523537009', '10093714135', '20601613884') THEN o.observaciones
+			ELSE NULL
+    	END AS observaciones
     FROM operaciones o   
     ` + joinAndWhere + ` ORDER BY o.cuo ASC `
 	var rows pgx.Rows
+	var err error
 	if pagination.Pagination && pagination.Limit > 0 && pagination.Offset >= 0 {
 		query += `LIMIT $3 OFFSET $4`
 		rows, err = r.Connection.Pool.Query(context.Background(), query, companyID, period, pagination.Limit, pagination.Offset)

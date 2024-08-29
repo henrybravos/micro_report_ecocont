@@ -2,6 +2,8 @@ package services
 
 import (
 	"bytes"
+	"fmt"
+	"time"
 
 	"github.com/henrybravo/micro-report/internal/report"
 	repo "github.com/henrybravo/micro-report/internal/repositories"
@@ -39,10 +41,15 @@ func (s *ReportService) CreateSalesPaginated(businessID, period string, isPagina
 }
 func (s *ReportService) CreateExcelSales(businessID, period string) (*bytes.Buffer, error) {
 	business, err := s.businessRepo.GetBusinessByID(businessID)
+	start := time.Now()
 	sales, _, err := s.salesRepo.GetSalesReports(businessID, period, repo.PaginationParams{Pagination: false})
 	if err != nil {
 		return nil, err
 	}
+	duration := time.Since(start)
+	fmt.Printf("Consulta a la base de datos completada en %v\n", duration)
+	fmt.Println("Procediendo a generar el EXCEL")
+
 	excel, err := s.excelGenerator.GenerateSalesReport(*business, sales, period)
 	if err != nil {
 		return nil, err
@@ -50,12 +57,19 @@ func (s *ReportService) CreateExcelSales(businessID, period string) (*bytes.Buff
 	return excel, nil
 }
 func (s *ReportService) CreatePDFSales(businessID, period string) (*bytes.Buffer, error) {
-	business, err := s.businessRepo.GetBusinessByID(businessID)
+	start := time.Now()
+	business, _ := s.businessRepo.GetBusinessByID(businessID)
 	sales, _, err := s.salesRepo.GetSalesReports(businessID, period, repo.PaginationParams{Pagination: false})
+	duration := time.Since(start)
+	fmt.Printf("Consulta a la base de datos completada en %v, total: %d items\n", duration, len(sales))
+	fmt.Println("Procediendo a generar el PDF")
+	start = time.Now()
 	if err != nil {
 		return nil, err
 	}
 	pdf, err := s.pdfGenerator.GeneratePDF(*business, sales, period)
+	duration = time.Since(start)
+	fmt.Printf("Generación del PDF completada en %v\n", duration)
 	if err != nil {
 		return nil, err
 	}

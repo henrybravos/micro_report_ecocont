@@ -9,9 +9,21 @@ import (
 	"github.com/henrybravo/micro-report/pkg/db"
 	"github.com/joho/godotenv"
 	"log"
+	"net/http"
+	_ "net/http/pprof" // Importa el paquete para habilitar el profiling
+	"runtime"
 )
 
 func main() {
+	// Inicia el servidor de profiling en un puerto específico
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:6060", nil)
+		if err != nil {
+			return
+		}
+	}()
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")

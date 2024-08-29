@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/internal/services"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type ReportHandler struct {
@@ -28,8 +28,15 @@ func (h *ReportHandler) GetSalesExcelReport(c *gin.Context) {
 		return
 	}
 
+	business, err := h.ReportService.GetBusinessByID(businessID)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
 	// Set headers to indicate an Excel file download
-	fileName := generateFileName("sales-report", "xlsx")
+	fileName := generateFileName(fmt.Sprintf("Reporte de Ventas - %s - %s", business.RUC, period), "xlsx")
 
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
@@ -45,8 +52,9 @@ func (h *ReportHandler) GetSalesExcelReport(c *gin.Context) {
 
 }
 func generateFileName(baseName, ext string) string {
-	currentDate := time.Now()
-	return fmt.Sprintf("%s-%s.%s", baseName, currentDate.Format("20060102150405"), ext)
+	//currentDate := time.Now()
+	//return fmt.Sprintf("%s-%s.%s", baseName, currentDate.Format("20060102150405"), ext)
+	return fmt.Sprintf(baseName + "." + ext)
 }
 func (h *ReportHandler) GetSalesReportPaginated(c *gin.Context) {
 	businessID := c.Query("businessID")

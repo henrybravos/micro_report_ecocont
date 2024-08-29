@@ -116,6 +116,7 @@ func (p *PdfGenerator) GeneratePDF(business repositories.Business, sales []repos
 	buffer = &bytes.Buffer{}
 	layout := p.initializeLayout()
 	pdf := gopdf.GoPdf{}
+	pdf.SetCompressLevel(9) //compress content streams
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4Landscape, Unit: gopdf.UnitCM})
 	err = pdf.AddTTFFont("arial", "./fonts/ARIAL.TTF")
 	err = pdf.AddTTFFont("arialB", "./fonts/ARIALBD.TTF")
