@@ -1,0 +1,24 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/henrybravo/micro-report/protos/gen/go
+plugins:
+  # server
+  - plugin: buf.build/protocolbuffers/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  - plugin: buf.build/connectrpc/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  # client
+  - plugin: buf.build/bufbuild/es
+    out: gen/js
+    opt:
+      - target=js+dts
+  - plugin: buf.build/bufbuild/connect-web
+    out: gen/js
+    opt:
+      - target=js+dts

@@ -2,9 +2,9 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
-	"github.com/google/uuid"
+	"errors"
 	"github.com/henrybravo/micro-report/pkg/db"
+	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -16,78 +16,9 @@ func NewSalesRepository(connection *db.Connection) *SalesRepository {
 	return &SalesRepository{Connection: connection}
 }
 
-type SalesReport struct {
-	ID                     uuid.UUID      // 1
-	Periodo                string         // 2
-	Cuo                    string         // 3
-	IdentificadorLinea     string         // 4
-	FechaEmision           sql.NullTime   // 5
-	FecEmision             string         // 6
-	FechaVencimiento       sql.NullTime   // 7
-	FecVencPag             sql.NullString // 8
-	CodigoTipoCDP          string         // 9
-	CodTipoCDP             string         // 10
-	Serie                  string         // 11
-	NumSerieCDP            string         // 12
-	Correlativo            string         // 13
-	NumCDP                 string         // 14
-	NumeroFinal            sql.NullString // 15
-	CodigoTipoDocIdentidad string         // 16
-	CodTipoDocIdentidad    string         // 17
-	NumDocIdentidad        string         // 18
-	NumDocIdentidadClient  string         // 19
-	RazonSocial            string         // 20
-	NomRazonSocialCliente  string         // 21
-	Exportacion            float64        // 22
-	MtoValFactExpo         float64        // 23
-	Base                   float64        // 24
-	MtoBIGravada           float64        // 25
-	DescBase               float64        // 26
-	MtoDsctoBI             float64        // 27
-	IGV                    float64        // 28
-	MtoIGV                 float64        // 29
-	DescIGV                float64        // 30
-	MtoDsctoIGV            float64        // 31
-	Exonerada              float64        // 32
-	MtoExonerado           float64        // 33
-	Inafecta               float64        // 34
-	MtoInafecto            float64        // 35
-	ISC                    float64        // 36
-	MtoISC                 float64        // 37
-	BaseIVAP               float64        // 38
-	MtoBIIvap              float64        // 39
-	IVAP                   float64        // 40
-	MtoIvap                float64        // 41
-	Otros                  float64        // 42
-	MtoOtrosTrib           float64        // 43
-	Total                  float64        // 44
-	MtoTotalCP             float64        // 45
-	CodigoMoneda           string         // 46
-	CodMoneda              string         // 47
-	TipoCambio             float64        // 48
-	MtoTipoCambio          float64        // 49
-	FechaCDPM              sql.NullTime   // 50
-	FecEmisionMod          sql.NullString // 51
-	CodigoTipoCDPMod       sql.NullString // 52
-	CodTipoCDPMod          sql.NullString // 53
-	NumSerieCDPMod         sql.NullString // 54
-	NumCDPMod              sql.NullString // 55
-	Numero                 sql.NullString // 56
-	NumCDPMod2             sql.NullString // 57
-	IdentificadorContrato  sql.NullString // 58
-	Error1                 sql.NullString // 59
-	Identificador          sql.NullString // 60
-	EstadoOperacion        sql.NullString // 61
-	CodEstadoComprobante   sql.NullString // 62
-	ICBPER                 float64        // 63
-	MtoIcbp                float64        // 64
-	EstadoCPE              sql.NullString // 65
-	Observaciones          sql.NullString // 66
-}
-
-func (r *SalesRepository) GetSalesReports(companyID string, period string, pagination PaginationParams) ([]SalesReport, *Pagination, error) {
+func (r *SalesRepository) GetSalesReports(companyID string, period string, pagination *v1.Pagination) ([]*v1.SalesReport, *v1.Pagination, error) {
 	// Count total records
-	var totalCount int
+	var totalCount int32
 	joinAndWhere := `
      INNER JOIN personas p ON o.persona_asociado_id = p.id
 	INNER JOIN ventas v ON o.id = v.operacion_id
@@ -112,38 +43,34 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
         ` + joinAndWhere
 	totalPages := 0
 
-	if pagination.Pagination && pagination.Limit > 0 && pagination.Offset >= 0 {
+	if pagination != nil && pagination.PageSize > 0 && pagination.Offset >= 0 {
 		err := r.Connection.Pool.QueryRow(context.Background(), countQuery, companyID, period).Scan(&totalCount)
 		if err != nil {
 			return nil, nil, err
 		}
-		totalPages = (totalCount + pagination.Limit - 1) / pagination.Limit
+		totalPages = int((totalCount + pagination.PageSize - 1) / pagination.PageSize)
 	}
 
-	if pagination.Offset > totalCount {
-		return nil, &Pagination{
-			TotalCount: totalCount,
-			TotalPages: totalPages,
-			Err:        "Offset out of range",
-		}, nil
+	if pagination != nil && pagination.Offset > totalCount {
+		return nil, nil, errors.New("offset out of range")
 	}
 	query := `
     SELECT
-        o.id,
+        o.id, --0
         o.periodo,
         o.cuo,
         v.identificador_linea,
-        o.fecha_emision,
-        TO_CHAR(o.fecha_emision, 'DD/MM/YYYY') AS "fecEmision",
-        o.fecha_vencimiento,
-        TO_CHAR(o.fecha_vencimiento, 'DD/MM/YYYY') AS "fecVencPag",
-        tco.codigo,
+        COALESCE(TO_CHAR(o.fecha_emision, 'DD/MM/YYYY'),'') AS "fecha_emision", --4
+        COALESCE(TO_CHAR(o.fecha_emision, 'DD/MM/YYYY'),'') AS "fecEmision",
+        COALESCE(TO_CHAR(o.fecha_vencimiento, 'DD/MM/YYYY'),'') AS "fecha_vencimiento",
+        COALESCE(TO_CHAR(o.fecha_vencimiento, 'DD/MM/YYYY'),'') AS "fecVencPag",
+        tco.codigo, --8
         tco.codigo AS "codTipoCDP",
         o.serie,
         o.serie AS "numSerieCDP",
         o.correlativo,
         o.correlativo AS "numCDP",
-        v.numero_final,
+        COALESCE(v.numero_final,0),
         td.codigo,
         td.codigo AS "codTipoDocIdentidad",
         p.numero,
@@ -151,7 +78,7 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
         p.razon_social,
         p.razon_social AS "nomRazonSocialCliente",
         v.exportacion,
-        v.exportacion AS "mtoValFactExpo",
+        v.exportacion AS "mtoValFactExpo", -- 22
         v.base,
         v.base AS "mtoBIGravada",
         v.desc_base,
@@ -178,33 +105,33 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
         tmo.codigo AS "codMoneda",
         o.tipo_cambio,
         o.tipo_cambio AS "mtoTipoCambio",
-        v.fecha_cdpm,
-        TO_CHAR(v.fecha_cdpm, 'DD/MM/YYYY') AS "fecEmisionMod",
-        tico.codigo,
-        tico.codigo AS "codTipoCDPMod",
-        v.serie_cdpm,
-        v.serie_cdpm AS "numSerieCDPMod",
-        v.numero,
-        v.numero AS "numCDPMod",
-        v.identificador_contrato,
-        v.error_1,
-        v.identificador,
-        v.estado_operacion,
-        v.estado_operacion AS "codEstadoComprobante",
-        v.icbper,
-        v.icbper AS "mtoIcbp",
-        v.estado_cpe,
+        COALESCE( TO_CHAR(v.fecha_cdpm, 'DD/MM/YYYY'),''),
+        COALESCE(TO_CHAR(v.fecha_cdpm, 'DD/MM/YYYY'),'') AS "fecEmisionMod",
+        COALESCE(tico.codigo,''), -- 51
+        COALESCE(tico.codigo,'') AS "codTipoCDPMod",
+        COALESCE(v.serie_cdpm,''), -- 53
+      	COALESCE(v.serie_cdpm,'') AS "numSerieCDPMod",
+        COALESCE(v.numero,''), --55
+       	COALESCE(v.numero,'') AS "numCDPMod", --56
+    	COALESCE(v.identificador_contrato,''), --57
+        COALESCE(v.error_1,FALSE),
+        COALESCE(v.identificador,FALSE), --59
+        v.estado_operacion, --60
+        v.estado_operacion AS "codEstadoComprobante",	--61
+        v.icbper, --62
+        v.icbper AS "mtoIcbp", --63
+        v.estado_cpe, --64
          CASE
 			WHEN e.ruc IN ('10095595761', '20523537009', '10093714135', '20601613884') THEN o.observaciones
-			ELSE NULL
-    	END AS observaciones
+			ELSE ''
+    	END AS observaciones --65
     FROM operaciones o   
     ` + joinAndWhere + ` ORDER BY o.cuo ASC `
 	var rows pgx.Rows
 	var err error
-	if pagination.Pagination && pagination.Limit > 0 && pagination.Offset >= 0 {
+	if pagination != nil && pagination.PageSize > 0 && pagination.Offset >= 0 {
 		query += `LIMIT $3 OFFSET $4`
-		rows, err = r.Connection.Pool.Query(context.Background(), query, companyID, period, pagination.Limit, pagination.Offset)
+		rows, err = r.Connection.Pool.Query(context.Background(), query, companyID, period, pagination.PageSize, pagination.Offset)
 	} else {
 		rows, err = r.Connection.Pool.Query(context.Background(), query, companyID, period)
 	}
@@ -214,11 +141,11 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
 	}
 	defer rows.Close()
 
-	var sales []SalesReport
+	var sales []*v1.SalesReport
 	for rows.Next() {
-		var reporte SalesReport
+		var reporte v1.SalesReport
 		if err := rows.Scan(
-			&reporte.ID,                     // 1
+			&reporte.Id,                     // 1
 			&reporte.Periodo,                // 2
 			&reporte.Cuo,                    // 3
 			&reporte.IdentificadorLinea,     // 4
@@ -226,12 +153,12 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
 			&reporte.FecEmision,             // 6
 			&reporte.FechaVencimiento,       // 7
 			&reporte.FecVencPag,             // 8
-			&reporte.CodigoTipoCDP,          // 9
-			&reporte.CodTipoCDP,             // 10
+			&reporte.CodigoTipoCdp,          // 9
+			&reporte.CodTipoCdp,             // 10
 			&reporte.Serie,                  // 11
-			&reporte.NumSerieCDP,            // 12
+			&reporte.NumSerieCdp,            // 12
 			&reporte.Correlativo,            // 13
-			&reporte.NumCDP,                 // 14
+			&reporte.NumCdp,                 // 14
 			&reporte.NumeroFinal,            // 15
 			&reporte.CodigoTipoDocIdentidad, // 16
 			&reporte.CodTipoDocIdentidad,    // 17
@@ -242,53 +169,53 @@ func (r *SalesRepository) GetSalesReports(companyID string, period string, pagin
 			&reporte.Exportacion,            // 22
 			&reporte.MtoValFactExpo,         // 23
 			&reporte.Base,                   // 24
-			&reporte.MtoBIGravada,           // 25
+			&reporte.MtoBiGravada,           // 25
 			&reporte.DescBase,               // 26
-			&reporte.MtoDsctoBI,             // 27
-			&reporte.IGV,                    // 28
-			&reporte.MtoIGV,                 // 29
-			&reporte.DescIGV,                // 30
-			&reporte.MtoDsctoIGV,            // 31
+			&reporte.MtoDsctoBi,             // 27
+			&reporte.Igv,                    // 28
+			&reporte.MtoIgv,                 // 29
+			&reporte.DescIgv,                // 30
+			&reporte.MtoDsctoIgv,            // 31
 			&reporte.Exonerada,              // 32
 			&reporte.MtoExonerado,           // 33
 			&reporte.Inafecta,               // 34
 			&reporte.MtoInafecto,            // 35
-			&reporte.ISC,                    // 36
-			&reporte.MtoISC,                 // 37
-			&reporte.BaseIVAP,               // 38
+			&reporte.Isc,                    // 36
+			&reporte.MtoIsc,                 // 37
+			&reporte.BaseIvap,               // 38
 			&reporte.MtoBIIvap,              // 39
-			&reporte.IVAP,                   // 40
+			&reporte.Ivap,                   // 40
 			&reporte.MtoIvap,                // 41
 			&reporte.Otros,                  // 42
 			&reporte.MtoOtrosTrib,           // 43
 			&reporte.Total,                  // 44
-			&reporte.MtoTotalCP,             // 45
+			&reporte.MtoTotalCp,             // 45
 			&reporte.CodigoMoneda,           // 46
 			&reporte.CodMoneda,              // 47
 			&reporte.TipoCambio,             // 48
 			&reporte.MtoTipoCambio,          // 49
-			&reporte.FechaCDPM,              // 50
+			&reporte.FechaCdpm,              // 50
 			&reporte.FecEmisionMod,          // 51
-			&reporte.CodigoTipoCDPMod,       // 52
-			&reporte.CodTipoCDPMod,          // 53
-			&reporte.NumSerieCDPMod,         // 54
-			&reporte.NumCDPMod,              // 55
+			&reporte.CodigoTipoCdpMod,       // 52
+			&reporte.CodTipoCdpMod,          // 53
+			&reporte.NumSerieCdpMod,         // 54
+			&reporte.NumCdpMod,              // 55
 			&reporte.Numero,                 // 56
-			&reporte.NumCDPMod2,             // 57
+			&reporte.NumCdpMod2,             // 57
 			&reporte.IdentificadorContrato,  // 58
 			&reporte.Error1,                 // 59
 			&reporte.Identificador,          // 60
 			&reporte.EstadoOperacion,        // 61
 			&reporte.CodEstadoComprobante,   // 62
-			&reporte.ICBPER,                 // 63
+			&reporte.Icbper,                 // 63
 			&reporte.MtoIcbp,                // 64
-			&reporte.EstadoCPE,              // 65
+			&reporte.EstadoCpe,              // 65
 			&reporte.Observaciones,          // 66
 		); err != nil {
 			return nil, nil, err
 		}
-		sales = append(sales, reporte)
+		sales = append(sales, &reporte)
 	}
 
-	return sales, &Pagination{TotalCount: totalCount, TotalPages: totalPages}, nil
+	return sales, &v1.Pagination{TotalCount: int32(totalCount), TotalPages: int32(totalPages)}, nil
 }
