@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package v1;
+
+import "v1/common.proto";
+
+message SalesReport {
+    string id = 1;
+    string periodo = 2;
+    string cuo = 3;
+    string identificador_linea =4;
+    string fecha_emision = 5;
+    string fec_emision = 6;
+    string fecha_vencimiento = 7;
+    string fec_venc_pag = 8;
+    string codigo_tipo_cdp = 9;
+    string cod_tipo_cdp = 10;
+    string serie = 11;
+    string num_serie_cdp = 12;
+    string correlativo = 13;
+    string num_cdp = 14;
+    string numero_final = 15;
+    string codigo_tipo_doc_identidad = 16;
+    string cod_tipo_doc_identidad = 17;
+    string num_doc_identidad = 18;
+    string num_doc_identidad_client = 19;
+    string razon_social = 20;
+    string nom_razon_social_cliente = 21;
+    float exportacion = 22;
+    float mto_val_fact_expo = 23;
+    float base = 24;
+    float mto_bi_gravada = 25;
+    float desc_base = 26;
+    float mto_dscto_bi = 27;
+    float igv = 28;
+    float mto_igv = 29;
+    float desc_igv = 30;
+    float mto_dscto_igv = 31;
+    float exonerada = 32;
+    float mto_exonerado = 33;
+    float inafecta = 34;
+    float mto_inafecto = 35;
+    float isc = 36;
+    float mto_isc = 37;
+    float base_ivap = 38;
+    float mto_b_i_ivap = 39;
+    float ivap = 40;
+    float mto_ivap = 41;
+    float otros = 42;
+    float mto_otros_trib = 43;
+    float total = 44;
+    float mto_total_cp = 45;
+    string codigo_moneda = 46;
+    string cod_moneda = 47;
+    float tipo_cambio = 48;
+    float mto_tipo_cambio = 49;
+    string fecha_cdpm = 50;
+    string fec_emision_mod = 51;
+    string codigo_tipo_cdp_mod = 52;
+    string cod_tipo_cdp_mod = 53;
+    string num_serie_cdp_mod = 54;
+    string num_cdp_mod = 55;
+    string numero = 56;
+    string num_cdp_mod2 = 57;
+    string identificador_contrato = 58;
+    bool error1 = 59;
+    bool identificador = 60;
+    string estado_operacion = 61;
+    string cod_estado_comprobante = 62;
+    float icbper = 63;
+    float mto_icbp = 64;
+    string estado_cpe = 65;
+    string observaciones = 66;
+}
+message RetrieveSalesPaginatedReportResponse {
+  repeated SalesReport sales = 1;
+  Pagination pagination = 2;
+}
+message RetrieveSalesPaginatedReportRequest {
+  string business_id = 1;
+  string period = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+}
+message RetrieveSalesResourceReportRequest {
+  string business_id = 1;
+  string period = 2;
+  TypeResource type = 3;
+}
+message RetrieveSalesResourceReportResponse {
+  string url = 1;
+}
+
+service SalesService {
+  rpc RetrieveSalesPaginatedReport (RetrieveSalesPaginatedReportRequest) returns (RetrieveSalesPaginatedReportResponse);
+  rpc RetrieveSalesResourceReport (RetrieveSalesResourceReportRequest) returns (RetrieveSalesResourceReportResponse);
+}

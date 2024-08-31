@@ -1,17 +1,19 @@
-package report
+package pdf
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/henrybravo/micro-report/internal/repositories"
+	"github.com/henrybravo/micro-report/pkg/files"
+	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
 	"github.com/signintech/gopdf"
 	"log"
+	"time"
 )
 
-type PdfGenerator struct{}
+type SalesGenerator struct{}
 
-func NewPdfGenerator() *PdfGenerator {
-	return &PdfGenerator{}
+func NewSalesGenerator() *SalesGenerator {
+	return &SalesGenerator{}
 }
 
 type layout struct {
@@ -62,7 +64,7 @@ type layout struct {
 	refComNum float64
 }
 
-func (p *PdfGenerator) initializeLayout() layout {
+func (p *SalesGenerator) initializeLayout() layout {
 	return layout{
 
 		headerPageH:  2.0,
@@ -112,8 +114,7 @@ func (p *PdfGenerator) initializeLayout() layout {
 		refComNum: 3.7 / 4,
 	}
 }
-func (p *PdfGenerator) GeneratePDF(business repositories.Business, sales []repositories.SalesReport, period string) (buffer *bytes.Buffer, err error) {
-	buffer = &bytes.Buffer{}
+func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sales []*v1.SalesReport, period string) (path string, err error) {
 	layout := p.initializeLayout()
 	pdf := gopdf.GoPdf{}
 	pdf.SetCompressLevel(9) //compress content streams
@@ -136,17 +137,17 @@ func (p *PdfGenerator) GeneratePDF(business repositories.Business, sales []repos
 		log.Print(err.Error())
 		return
 	}
-
-	// send
-	_, err = pdf.WriteTo(buffer)
+	path = files.GenerateUniqueNameFile("pdf")
+	err = pdf.WritePdf("tmp/" + path)
 	if err != nil {
 		fmt.Println("Error writing file:", err)
 	} else {
 		fmt.Println("PDF created send successfully")
+		files.RemoveAfter("tmp/"+path, 5*time.Minute)
 	}
 	return
 }
-func generatePage(business repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
+func generatePage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
 	pdf.AddPage()
 	pdf.SetXY(0, layout.marginY)
 	err := generateHeaderPage(business, period, pdf, layout)
@@ -155,7 +156,7 @@ func generatePage(business repositories.Business, period string, pdf *gopdf.GoPd
 	pdf.SetXY(layout.marginX, layout.headerPageH+layout.headerTableH)
 	return err
 }
-func generateHeaderPage(business repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) (err error) {
+func generateHeaderPage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) (err error) {
 	err = pdf.SetFont("arialB", "", 6)
 	rect := &gopdf.Rect{
 		H: 0.5,
@@ -384,7 +385,7 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 	err = pdf.CellWithOption(rect, "NÚMERO", cellOptionAllBorderCenter)
 	return err
 }
-func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY float64, layout layout) error {
+func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64, layout layout) error {
 	err := pdf.SetFont("arial", "", 4.5)
 	rowMiddle := locationY + 2*layout.rowTableH/3
 	rowW := layout.pageW - layout.marginX*2
@@ -409,20 +410,16 @@ func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY
 	err = pdf.Text(sale.FecEmision)
 	currentWriteW += layout.cpeFecEmiW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	fecVen := ""
-	if sale.FechaVencimiento.Valid {
-		fecVen = sale.FechaVencimiento.Time.Format("02/01/2006")
-	}
-	err = pdf.Text(fecVen)
+	err = pdf.Text(sale.FechaVencimiento)
 	currentWriteW += layout.cpeFecVenW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.CodigoTipoCDP)
+	err = pdf.Text(sale.CodigoTipoCdp)
 	currentWriteW += layout.cpeTipoW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.NumSerieCDP)
+	err = pdf.Text(sale.NumSerieCdp)
 	currentWriteW += layout.cpeSerieW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.NumCDP)
+	err = pdf.Text(sale.NumCdp)
 	currentWriteW += layout.cpeNumW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text("  " + sale.CodTipoDocIdentidad)
@@ -452,7 +449,7 @@ func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY
 	err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
 	currentWriteW += layout.baseImpW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.IGV))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Igv))
 	currentWriteW += layout.igvW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(fmt.Sprintf("%.2f", sale.Exonerada))
@@ -461,36 +458,36 @@ func generateRowTable(pdf *gopdf.GoPdf, sale repositories.SalesReport, locationY
 	err = pdf.Text(fmt.Sprintf("%.2f", sale.Inafecta))
 	currentWriteW += layout.totalInaW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.ISC))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Isc))
 	currentWriteW += layout.iscW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
 	currentWriteW += layout.opBaseW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.BaseIVAP))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.BaseIvap))
 	currentWriteW += layout.opIVAPW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.ICBPER))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.Icbper))
 	currentWriteW += layout.icbW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(fmt.Sprintf("%.2f", sale.Otros))
 	currentWriteW += layout.otrosW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoTotalCP))
+	err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoTotalCp))
 	currentWriteW += layout.impTotalW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(fmt.Sprintf("%.2f", sale.TipoCambio))
 	currentWriteW += layout.tcW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.FecEmisionMod.String)
+	err = pdf.Text(sale.FecEmisionMod)
 	currentWriteW += layout.refComFec
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.CodigoTipoCDPMod.String)
+	err = pdf.Text(sale.CodigoTipoCdpMod)
 	currentWriteW += layout.refComTip
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.NumSerieCDPMod.String)
+	err = pdf.Text(sale.NumSerieCdpMod)
 	currentWriteW += layout.refComSer
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.NumCDPMod.String)
+	err = pdf.Text(sale.NumCdpMod)
 	return err
 }
