@@ -126,12 +126,59 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 		return
 	}
 	err = generatePage(business, period, &pdf, layout)
+	//calcular totales
+	sumMtoValFactExpo := float32(0)
+	sumBase := float32(0)
+	sumIgv := float32(0)
+	sumExonerada := float32(0)
+	sumInafecta := float32(0)
+	sumIsc := float32(0)
+	sumBaseIvap := float32(0)
+	sumIcbper := float32(0)
+	sumOtros := float32(0)
+	sumMtoTotalCp := float32(0)
+
+	cellsWithData := 0
+	bandComings := false
 	for _, sale := range sales {
-		if pdf.GetY()+layout.rowTableH+layout.marginY > layout.pageH {
+		if pdf.GetY()+2*layout.rowTableH+2*layout.marginY > layout.pageH {
 			err = generatePage(business, period, &pdf, layout)
+			if err != nil {
+				return "", err
+			}
+			bandComings = true
 		}
-		locationY := pdf.GetY() + layout.rowTableH
+		numCells := determineNumCells(sale)
+		locationY := pdf.GetY() + layout.rowTableH*float64(numCells)
+
+		if bandComings {
+			//for comming true and for going false
+			err = generateComingsAndGoings(&pdf, locationY, layout, true, sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
+			if err != nil {
+				return "", err
+			}
+			bandComings = false
+			locationY = pdf.GetY() + layout.rowTableH*float64(numCells)
+		}
 		err = generateRowTable(&pdf, sale, locationY, layout)
+
+		sumMtoValFactExpo += sale.MtoValFactExpo
+		sumBase += sale.Base
+		sumIgv += sale.Igv
+		sumExonerada += sale.Exonerada
+		sumInafecta += sale.Inafecta
+		sumIsc += sale.Isc
+		sumBaseIvap += sale.BaseIvap
+		sumIcbper += sale.Icbper
+		sumOtros += sale.Otros
+		sumMtoTotalCp += sale.MtoTotalCp
+
+		cellsWithData += 1
+
+		//check for goings (van)
+		if pdf.GetY()+2*layout.rowTableH*2+layout.marginY > layout.pageH {
+			err = generateComingsAndGoings(&pdf, locationY, layout, false, sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
+		}
 	}
 	if err != nil {
 		log.Print(err.Error())
@@ -146,6 +193,10 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 		files.RemoveAfter("tmp/"+path, 5*time.Minute)
 	}
 	return
+}
+func determineNumCells(sale *v1.SalesReport) int {
+	numCells := len(sale.RazonSocial)/50 + 1
+	return numCells
 }
 func generatePage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
 	pdf.AddPage()
@@ -429,15 +480,13 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	currentWriteW += layout.cliDocNumW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	lenRazon := len(sale.RazonSocial)
-	if lenRazon > 40 {
+	if lenRazon > 50 {
 		pdf.SetXY(currentWriteW, rowMiddle-0.25)
-		err = pdf.SetFont("arial", "", 3)
-		rect = &gopdf.Rect{
+		rect := &gopdf.Rect{
 			H: layout.rowTableH * 3,
 			W: layout.cliApeNomW,
 		}
 		err = pdf.MultiCell(rect, sale.RazonSocial)
-		err = pdf.SetFont("arial", "", 4.5)
 	} else {
 		err = pdf.Text(sale.RazonSocial)
 	}
@@ -489,5 +538,89 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	currentWriteW += layout.refComSer
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.NumCdpMod)
+	return err
+}
+
+func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout, goingComing bool,
+	sumMtoValFactExpo float32, sumBase float32,
+	sumIgv float32, sumExonerada float32, sumInafecta float32,
+	sumIsc float32, sumBaseIvap float32, sumIcbper float32, sumOtros float32, sumMtoTotalCp float32) error {
+	if !goingComing {
+		locationY += layout.rowTableH
+	} else {
+		locationY -= layout.rowTableH
+	}
+	err := pdf.SetFont("arialB", "", 4.5)
+	if err != nil {
+		log.Print(err.Error())
+	}
+	rowMiddle := locationY + 2*layout.rowTableH/3
+	rowW := layout.pageW - layout.marginX*2
+	marginText := 0.075
+	currentWriteW := layout.marginX + marginText
+	pdf.SetXY(layout.marginX, locationY)
+	pdf.SetStrokeColor(222, 219, 218)
+	pdf.SetLineWidth(0)
+	cellOptionBottom := gopdf.CellOption{
+		Border: gopdf.Bottom,
+		Align:  gopdf.Left | gopdf.Middle,
+	}
+	rect := &gopdf.Rect{
+		H: layout.rowTableH,
+		W: rowW,
+	}
+	err = pdf.CellWithOption(rect, "", cellOptionBottom)
+	currentWriteW += layout.cuoW
+	currentWriteW += layout.cpeFecEmiW
+	currentWriteW += layout.cpeFecVenW
+	currentWriteW += layout.cpeTipoW
+	currentWriteW += layout.cpeSerieW
+	currentWriteW += layout.cpeNumW
+	currentWriteW += layout.cliDocTipoW
+	currentWriteW += layout.cliDocNumW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	if !goingComing {
+		err = pdf.Text("VAN")
+	} else {
+		err = pdf.Text("VIENEN")
+	}
+	currentWriteW += layout.cliApeNomW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumMtoValFactExpo))
+	currentWriteW += layout.valFacOExpW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumBase))
+	currentWriteW += layout.baseImpW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumIgv))
+	currentWriteW += layout.igvW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumExonerada))
+	currentWriteW += layout.totalExoW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumInafecta))
+	currentWriteW += layout.totalInaW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumIsc))
+	currentWriteW += layout.iscW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumBase))
+	currentWriteW += layout.opBaseW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumBaseIvap))
+	currentWriteW += layout.opIVAPW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumIcbper))
+	currentWriteW += layout.icbW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumOtros))
+	currentWriteW += layout.otrosW
+	pdf.SetXY(currentWriteW, rowMiddle)
+	err = pdf.Text(fmt.Sprintf("%.2f", sumMtoTotalCp))
+	currentWriteW += layout.impTotalW
+	currentWriteW += layout.tcW
+	currentWriteW += layout.refComFec
+	currentWriteW += layout.refComTip
+	currentWriteW += layout.refComSer
 	return err
 }
