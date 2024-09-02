@@ -79,7 +79,7 @@ func (s *SalesServer) RetrieveSalesResourceReport(
 	var pathName string
 	if typeResource == v1.TypeResource_TYPE_RESOURCE_XLSX {
 		generatorXLSX := excel.NewSalesGenerator()
-		pathName, err = generatorXLSX.GenerateSalesReport(sales)
+		pathName, err = generatorXLSX.GenerateSalesReport(business, period, sales)
 	}
 	if typeResource == v1.TypeResource_TYPE_RESOURCE_PDF {
 		generatorPdf := pdf.NewSalesGenerator()
