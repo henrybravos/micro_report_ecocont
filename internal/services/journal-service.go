@@ -15,10 +15,10 @@ type JournalServer struct {
 	JournalRepo *repo.JournalRepository
 }
 
-func (s *JournalServer) RetrieveJournalPaginatedReport(
+func (s *JournalServer) RetrieveJournalReport(
 	_ context.Context,
-	req *connect.Request[v1.RetrieveJournalPaginatedReportRequest],
-) (*connect.Response[v1.RetrieveJournalPaginatedReportResponse], error) {
+	req *connect.Request[v1.RetrieveJournalReportRequest],
+) (*connect.Response[v1.RetrieveJournalReportResponse], error) {
 	log.Println("Request headers: ", req.Header())
 	businessID := req.Msg.GetBusinessId()
 	period := req.Msg.GetPeriod()
@@ -39,7 +39,7 @@ func (s *JournalServer) RetrieveJournalPaginatedReport(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	res := connect.NewResponse(&v1.RetrieveJournalPaginatedReportResponse{
+	res := connect.NewResponse(&v1.RetrieveJournalReportResponse{
 		Journals: journalEntries,
 	})
 	res.Header().Set("Report-Version", "v1")

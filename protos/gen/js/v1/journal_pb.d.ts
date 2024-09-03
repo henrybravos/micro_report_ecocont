@@ -137,9 +137,9 @@ export declare type JournalEntry = Message<"v1.JournalEntry"> & {
 export declare const JournalEntrySchema: GenMessage<JournalEntry>;
 
 /**
- * @generated from message v1.RetrieveJournalPaginatedReportResponse
+ * @generated from message v1.RetrieveJournalReportResponse
  */
-export declare type RetrieveJournalPaginatedReportResponse = Message<"v1.RetrieveJournalPaginatedReportResponse"> & {
+export declare type RetrieveJournalReportResponse = Message<"v1.RetrieveJournalReportResponse"> & {
   /**
    * @generated from field: repeated v1.JournalEntry journals = 1;
    */
@@ -147,15 +147,15 @@ export declare type RetrieveJournalPaginatedReportResponse = Message<"v1.Retriev
 };
 
 /**
- * Describes the message v1.RetrieveJournalPaginatedReportResponse.
- * Use `create(RetrieveJournalPaginatedReportResponseSchema)` to create a new message.
+ * Describes the message v1.RetrieveJournalReportResponse.
+ * Use `create(RetrieveJournalReportResponseSchema)` to create a new message.
  */
-export declare const RetrieveJournalPaginatedReportResponseSchema: GenMessage<RetrieveJournalPaginatedReportResponse>;
+export declare const RetrieveJournalReportResponseSchema: GenMessage<RetrieveJournalReportResponse>;
 
 /**
- * @generated from message v1.RetrieveJournalPaginatedReportRequest
+ * @generated from message v1.RetrieveJournalReportRequest
  */
-export declare type RetrieveJournalPaginatedReportRequest = Message<"v1.RetrieveJournalPaginatedReportRequest"> & {
+export declare type RetrieveJournalReportRequest = Message<"v1.RetrieveJournalReportRequest"> & {
   /**
    * @generated from field: string business_id = 1;
    */
@@ -183,22 +183,22 @@ export declare type RetrieveJournalPaginatedReportRequest = Message<"v1.Retrieve
 };
 
 /**
- * Describes the message v1.RetrieveJournalPaginatedReportRequest.
- * Use `create(RetrieveJournalPaginatedReportRequestSchema)` to create a new message.
+ * Describes the message v1.RetrieveJournalReportRequest.
+ * Use `create(RetrieveJournalReportRequestSchema)` to create a new message.
  */
-export declare const RetrieveJournalPaginatedReportRequestSchema: GenMessage<RetrieveJournalPaginatedReportRequest>;
+export declare const RetrieveJournalReportRequestSchema: GenMessage<RetrieveJournalReportRequest>;
 
 /**
  * @generated from service v1.JournalService
  */
 export declare const JournalService: GenService<{
   /**
-   * @generated from rpc v1.JournalService.RetrieveJournalPaginatedReport
+   * @generated from rpc v1.JournalService.RetrieveJournalReport
    */
-  retrieveJournalPaginatedReport: {
+  retrieveJournalReport: {
     methodKind: "unary";
-    input: typeof RetrieveJournalPaginatedReportRequestSchema;
-    output: typeof RetrieveJournalPaginatedReportResponseSchema;
+    input: typeof RetrieveJournalReportRequestSchema;
+    output: typeof RetrieveJournalReportResponseSchema;
   },
 }>;
 

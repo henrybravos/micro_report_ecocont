@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { RetrieveJournalPaginatedReportRequest, RetrieveJournalPaginatedReportResponse } from "./journal_pb.js";
+import { RetrieveJournalReportRequest, RetrieveJournalReportResponse } from "./journal_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -13,12 +13,12 @@ export const JournalService = {
   typeName: "v1.JournalService",
   methods: {
     /**
-     * @generated from rpc v1.JournalService.RetrieveJournalPaginatedReport
+     * @generated from rpc v1.JournalService.RetrieveJournalReport
      */
-    retrieveJournalPaginatedReport: {
-      name: "RetrieveJournalPaginatedReport",
-      I: RetrieveJournalPaginatedReportRequest,
-      O: RetrieveJournalPaginatedReportResponse,
+    retrieveJournalReport: {
+      name: "RetrieveJournalReport",
+      I: RetrieveJournalReportRequest,
+      O: RetrieveJournalReportResponse,
       kind: MethodKind.Unary,
     },
   }

@@ -66,7 +66,7 @@ available for 5 minutes
 ### Journal "Libro de trabajo"
 
 ```http
-  POST /v1.JournalService/RetrieveJournalPaginatedReport
+  POST /v1.JournalService/RetrieveJournalReport
 ```
 
 | Parameter                | Type     | Description                                                                |

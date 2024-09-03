@@ -27,10 +27,10 @@ message JournalEntry {
   float debe = 22;
   float haber = 23;
 }
-message RetrieveJournalPaginatedReportResponse {
+message RetrieveJournalReportResponse {
   repeated JournalEntry journals = 1;
 }
-message RetrieveJournalPaginatedReportRequest {
+message RetrieveJournalReportRequest {
   string business_id = 1;
   string period = 2;
   bool is_consolidated = 3;
@@ -38,5 +38,5 @@ message RetrieveJournalPaginatedReportRequest {
   bool include_cu_ba= 5;
 }
 service JournalService {
-  rpc RetrieveJournalPaginatedReport (RetrieveJournalPaginatedReportRequest) returns (RetrieveJournalPaginatedReportResponse);
+  rpc RetrieveJournalReport (RetrieveJournalReportRequest) returns (RetrieveJournalReportResponse);
 }

@@ -33,20 +33,20 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// JournalServiceRetrieveJournalPaginatedReportProcedure is the fully-qualified name of the
-	// JournalService's RetrieveJournalPaginatedReport RPC.
-	JournalServiceRetrieveJournalPaginatedReportProcedure = "/v1.JournalService/RetrieveJournalPaginatedReport"
+	// JournalServiceRetrieveJournalReportProcedure is the fully-qualified name of the JournalService's
+	// RetrieveJournalReport RPC.
+	JournalServiceRetrieveJournalReportProcedure = "/v1.JournalService/RetrieveJournalReport"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	journalServiceServiceDescriptor                              = v1.File_v1_journal_proto.Services().ByName("JournalService")
-	journalServiceRetrieveJournalPaginatedReportMethodDescriptor = journalServiceServiceDescriptor.Methods().ByName("RetrieveJournalPaginatedReport")
+	journalServiceServiceDescriptor                     = v1.File_v1_journal_proto.Services().ByName("JournalService")
+	journalServiceRetrieveJournalReportMethodDescriptor = journalServiceServiceDescriptor.Methods().ByName("RetrieveJournalReport")
 )
 
 // JournalServiceClient is a client for the v1.JournalService service.
 type JournalServiceClient interface {
-	RetrieveJournalPaginatedReport(context.Context, *connect.Request[v1.RetrieveJournalPaginatedReportRequest]) (*connect.Response[v1.RetrieveJournalPaginatedReportResponse], error)
+	RetrieveJournalReport(context.Context, *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error)
 }
 
 // NewJournalServiceClient constructs a client for the v1.JournalService service. By default, it
@@ -59,10 +59,10 @@ type JournalServiceClient interface {
 func NewJournalServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) JournalServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &journalServiceClient{
-		retrieveJournalPaginatedReport: connect.NewClient[v1.RetrieveJournalPaginatedReportRequest, v1.RetrieveJournalPaginatedReportResponse](
+		retrieveJournalReport: connect.NewClient[v1.RetrieveJournalReportRequest, v1.RetrieveJournalReportResponse](
 			httpClient,
-			baseURL+JournalServiceRetrieveJournalPaginatedReportProcedure,
-			connect.WithSchema(journalServiceRetrieveJournalPaginatedReportMethodDescriptor),
+			baseURL+JournalServiceRetrieveJournalReportProcedure,
+			connect.WithSchema(journalServiceRetrieveJournalReportMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -70,17 +70,17 @@ func NewJournalServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // journalServiceClient implements JournalServiceClient.
 type journalServiceClient struct {
-	retrieveJournalPaginatedReport *connect.Client[v1.RetrieveJournalPaginatedReportRequest, v1.RetrieveJournalPaginatedReportResponse]
+	retrieveJournalReport *connect.Client[v1.RetrieveJournalReportRequest, v1.RetrieveJournalReportResponse]
 }
 
-// RetrieveJournalPaginatedReport calls v1.JournalService.RetrieveJournalPaginatedReport.
-func (c *journalServiceClient) RetrieveJournalPaginatedReport(ctx context.Context, req *connect.Request[v1.RetrieveJournalPaginatedReportRequest]) (*connect.Response[v1.RetrieveJournalPaginatedReportResponse], error) {
-	return c.retrieveJournalPaginatedReport.CallUnary(ctx, req)
+// RetrieveJournalReport calls v1.JournalService.RetrieveJournalReport.
+func (c *journalServiceClient) RetrieveJournalReport(ctx context.Context, req *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error) {
+	return c.retrieveJournalReport.CallUnary(ctx, req)
 }
 
 // JournalServiceHandler is an implementation of the v1.JournalService service.
 type JournalServiceHandler interface {
-	RetrieveJournalPaginatedReport(context.Context, *connect.Request[v1.RetrieveJournalPaginatedReportRequest]) (*connect.Response[v1.RetrieveJournalPaginatedReportResponse], error)
+	RetrieveJournalReport(context.Context, *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error)
 }
 
 // NewJournalServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -89,16 +89,16 @@ type JournalServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewJournalServiceHandler(svc JournalServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	journalServiceRetrieveJournalPaginatedReportHandler := connect.NewUnaryHandler(
-		JournalServiceRetrieveJournalPaginatedReportProcedure,
-		svc.RetrieveJournalPaginatedReport,
-		connect.WithSchema(journalServiceRetrieveJournalPaginatedReportMethodDescriptor),
+	journalServiceRetrieveJournalReportHandler := connect.NewUnaryHandler(
+		JournalServiceRetrieveJournalReportProcedure,
+		svc.RetrieveJournalReport,
+		connect.WithSchema(journalServiceRetrieveJournalReportMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/v1.JournalService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case JournalServiceRetrieveJournalPaginatedReportProcedure:
-			journalServiceRetrieveJournalPaginatedReportHandler.ServeHTTP(w, r)
+		case JournalServiceRetrieveJournalReportProcedure:
+			journalServiceRetrieveJournalReportHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -108,6 +108,6 @@ func NewJournalServiceHandler(svc JournalServiceHandler, opts ...connect.Handler
 // UnimplementedJournalServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedJournalServiceHandler struct{}
 
-func (UnimplementedJournalServiceHandler) RetrieveJournalPaginatedReport(context.Context, *connect.Request[v1.RetrieveJournalPaginatedReportRequest]) (*connect.Response[v1.RetrieveJournalPaginatedReportResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.JournalService.RetrieveJournalPaginatedReport is not implemented"))
+func (UnimplementedJournalServiceHandler) RetrieveJournalReport(context.Context, *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.JournalService.RetrieveJournalReport is not implemented"))
 }
