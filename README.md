@@ -33,7 +33,7 @@ Install micro-report with tidy
 
 ### Sales
 
-#### Get pdf sales report
+#### Get pdf/excel sales report
 
 ```http
   POST /v1.SalesService/RetrieveSalesResourceReport
@@ -48,7 +48,7 @@ Install micro-report with tidy
 **return:** `string` path of file, use: http://localhost:8080/tmp/pdf/2024000.pdf
 available for 5 minutes
 
-#### Get excel sales report
+#### Get sales report paginated
 
 ```http
   POST /v1.SalesService/RetrieveSalesPaginatedReport
@@ -61,4 +61,20 @@ available for 5 minutes
 | `page`       | `int`    | **Required**. Page number, eg: 1162                                        |
 | `pageSize`   | `int`    | **Required**. Page size, eg: 30                                            |
 
-**return:** proto []SalesReport in json
+**return:** []SalesReport
+
+### Journal "Libro de trabajo"
+
+```http
+  POST /v1.JournalService/RetrieveJournalPaginatedReport
+```
+
+| Parameter                | Type     | Description                                                                |
+|:-------------------------|:---------|:---------------------------------------------------------------------------|
+| `period`                 | `string` | **Required**. Period for retrieve, eg: 2024-01                             |
+| `businessId`             | `string` | **Required**. Company for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef |
+| `isConsolidated`         | `bool`   | is consolidated, DEFAULT: false                                            |
+| `includeCuBa`            | `bool`   | include accounts bank, DEFAULT: false                                      |
+| `includeClose`           | `bool`   | include close report, DEFAULT: false                                       |
+
+**return:** proto []JournalEntries
