@@ -138,9 +138,10 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 	sumOtros := float32(0)
 	sumMtoTotalCp := float32(0)
 
-	cellsWithData := 0
 	bandComings := false
+	lensales := len(sales)
 	for _, sale := range sales {
+		lensales -= 1
 		if pdf.GetY()+2*layout.rowTableH+2*layout.marginY > layout.pageH {
 			err = generatePage(business, period, &pdf, layout)
 			if err != nil {
@@ -158,7 +159,7 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 				return "", err
 			}
 			bandComings = false
-			locationY = pdf.GetY() + layout.rowTableH*float64(numCells)
+			//locationY = pdf.GetY() + layout.rowTableH*float64(numCells)
 		}
 		err = generateRowTable(&pdf, sale, locationY, layout)
 
@@ -173,17 +174,32 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 		sumOtros += sale.Otros
 		sumMtoTotalCp += sale.MtoTotalCp
 
-		cellsWithData += 1
-
 		//check for goings (van)
-		if pdf.GetY()+2*layout.rowTableH*2+layout.marginY > layout.pageH {
+		if pdf.GetY()+2*layout.rowTableH*2+layout.marginY > layout.pageH && lensales > 0 {
 			err = generateComingsAndGoings(&pdf, locationY, layout, false, sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
+		}
+		//for total
+		if lensales == 0 {
+			if pdf.GetY()+layout.rowTableH+layout.marginY > layout.pageH {
+				err = generatePage(business, period, &pdf, layout)
+				if err != nil {
+					return "", err
+				}
+			}
+			err = addTotal(&pdf, locationY, layout, sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
+
+			if err != nil {
+				log.Print(err.Error())
+				return
+			}
 		}
 	}
 	if err != nil {
 		log.Print(err.Error())
 		return
 	}
+	//add total, primero verifica que haya espacio para agregar el total
+
 	path = files.GenerateUniqueNameFile("pdf")
 	err = pdf.WritePdf("tmp/" + path)
 	if err != nil {
@@ -492,40 +508,88 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	}
 	currentWriteW += layout.cliApeNomW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoValFactExpo))
+	if sale.MtoValFactExpo == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoValFactExpo))
+	}
 	currentWriteW += layout.valFacOExpW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
+	if sale.Base == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
+	}
 	currentWriteW += layout.baseImpW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Igv))
+	if sale.Igv == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Igv))
+	}
 	currentWriteW += layout.igvW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Exonerada))
+	if sale.Exonerada == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Exonerada))
+	}
 	currentWriteW += layout.totalExoW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Inafecta))
+	if sale.Inafecta == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Inafecta))
+	}
 	currentWriteW += layout.totalInaW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Isc))
+	if sale.Isc == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Isc))
+	}
 	currentWriteW += layout.iscW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
+	if sale.Base == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Base))
+	}
 	currentWriteW += layout.opBaseW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.BaseIvap))
+	if sale.BaseIvap == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.BaseIvap))
+	}
 	currentWriteW += layout.opIVAPW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Icbper))
+	if sale.Icbper == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Icbper))
+	}
 	currentWriteW += layout.icbW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.Otros))
+	if sale.Otros == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.Otros))
+	}
 	currentWriteW += layout.otrosW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoTotalCp))
+	if sale.MtoTotalCp == 0 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.MtoTotalCp))
+	}
 	currentWriteW += layout.impTotalW
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sale.TipoCambio))
+	if sale.TipoCambio == 1 {
+		err = pdf.Text("")
+	} else {
+		err = pdf.Text(fmt.Sprintf("%.2f", sale.TipoCambio))
+	}
 	currentWriteW += layout.tcW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.FecEmisionMod)
@@ -555,72 +619,200 @@ func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout
 		log.Print(err.Error())
 	}
 	rowMiddle := locationY + 2*layout.rowTableH/3
-	rowW := layout.pageW - layout.marginX*2
 	marginText := 0.075
 	currentWriteW := layout.marginX + marginText
-	pdf.SetXY(layout.marginX, locationY)
-	pdf.SetStrokeColor(222, 219, 218)
+
+	// Función para escribir una celda con borde
+	writeCell := func(width float64, text string) {
+		pdf.SetXY(currentWriteW, locationY)
+		cellOption := gopdf.CellOption{
+			Align: gopdf.Left | gopdf.Middle,
+		}
+
+		if !goingComing && text != "" && text != "VAN" {
+			pdf.SetStrokeColor(50, 50, 50)
+			cellOption.Border = gopdf.Top
+		}
+		if goingComing {
+			pdf.SetStrokeColor(222, 219, 218)
+			cellOption.Border = gopdf.Bottom
+		}
+
+		rect := &gopdf.Rect{
+			H: layout.rowTableH,
+			W: width,
+		}
+		err = pdf.CellWithOption(rect, "", cellOption)
+		if err != nil {
+			log.Fatalf("Error writing cell: %v", err)
+		}
+		pdf.SetXY(currentWriteW, rowMiddle)
+		err = pdf.Text(text)
+		if err != nil {
+			log.Fatalf("Error writing text: %v", err)
+		}
+		currentWriteW += width
+	}
 	pdf.SetLineWidth(0)
-	cellOptionBottom := gopdf.CellOption{
-		Border: gopdf.Bottom,
-		Align:  gopdf.Left | gopdf.Middle,
+
+	// Escribir celdas con borde
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cuoW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cpeFecEmiW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cpeFecVenW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cpeTipoW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cpeSerieW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cpeNumW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cliDocTipoW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cliDocNumW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.cliApeNomW, func() string {
+	// 	if !goingComing {
+	// 		return "VAN"
+	// 	}
+	// 	return "VIENEN"
+	// }(), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.valFacOExpW, fmt.Sprintf("%.2f", sumMtoValFactExpo), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.baseImpW, fmt.Sprintf("%.2f", sumBase), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.igvW, fmt.Sprintf("%.2f", sumIgv), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.totalExoW, fmt.Sprintf("%.2f", sumExonerada), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.totalInaW, fmt.Sprintf("%.2f", sumInafecta), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.iscW, fmt.Sprintf("%.2f", sumIsc), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.opBaseW, fmt.Sprintf("%.2f", sumBase), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.opIVAPW, fmt.Sprintf("%.2f", sumBaseIvap), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.icbW, fmt.Sprintf("%.2f", sumIcbper), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.otrosW, fmt.Sprintf("%.2f", sumOtros), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.impTotalW, fmt.Sprintf("%.2f", sumMtoTotalCp), goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.tcW, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.refComFec, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.refComTip, "", goingComing, layout)
+	// currentWriteW, err = writeCell(pdf, currentWriteW, locationY, rowMiddle, layout.refComSer, "", goingComing, layout)
+
+	writeCell(layout.cuoW, "")
+	writeCell(layout.cpeFecEmiW, "")
+	writeCell(layout.cpeFecVenW, "")
+	writeCell(layout.cpeTipoW, "")
+	writeCell(layout.cpeSerieW, "")
+	writeCell(layout.cpeNumW, "")
+	writeCell(layout.cliDocTipoW, "")
+	writeCell(layout.cliDocNumW, "")
+	writeCell(layout.cliApeNomW, func() string {
+		if !goingComing {
+			return "VAN"
+		}
+		return "VIENEN"
+	}())
+	writeCell(layout.valFacOExpW, fmt.Sprintf("%.2f", sumMtoValFactExpo))
+	writeCell(layout.baseImpW, fmt.Sprintf("%.2f", sumBase))
+	writeCell(layout.igvW, fmt.Sprintf("%.2f", sumIgv))
+	writeCell(layout.totalExoW, fmt.Sprintf("%.2f", sumExonerada))
+	writeCell(layout.totalInaW, fmt.Sprintf("%.2f", sumInafecta))
+	writeCell(layout.iscW, fmt.Sprintf("%.2f", sumIsc))
+	writeCell(layout.opBaseW, fmt.Sprintf("%.2f", sumBase))
+	writeCell(layout.opIVAPW, fmt.Sprintf("%.2f", sumBaseIvap))
+	writeCell(layout.icbW, fmt.Sprintf("%.2f", sumIcbper))
+	writeCell(layout.otrosW, fmt.Sprintf("%.2f", sumOtros))
+	writeCell(layout.impTotalW, fmt.Sprintf("%.2f", sumMtoTotalCp))
+	writeCell(layout.tcW, "")
+	writeCell(layout.refComFec, "")
+	writeCell(layout.refComTip, "")
+	writeCell(layout.refComSer, "")
+
+	return err
+}
+
+func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactExpo float32, sumBase float32,
+	sumIgv float32, sumExonerada float32, sumInafecta float32, sumIsc float32, sumBaseIvap float32,
+	sumIcbper float32, sumOtros float32, sumMtoTotalCp float32) error {
+	err := pdf.SetFont("arialB", "", 4.5)
+	if err != nil {
+		log.Print(err.Error())
 	}
-	rect := &gopdf.Rect{
-		H: layout.rowTableH,
-		W: rowW,
+
+	rowMiddle := locationY + 2*layout.rowTableH
+	marginText := 0.075
+	currentWriteW := layout.marginX 
+
+	writeCell := func(width float64, text string, borderTop bool) {
+		pdf.SetXY(currentWriteW, locationY)
+		cellOption := gopdf.CellOption{
+			Align: gopdf.Left | gopdf.Middle,
+		}
+
+		if !borderTop && text != "" && text != "TOTAL" {
+			pdf.SetStrokeColor(50, 50, 50)
+			cellOption.Border = gopdf.Bottom
+		}
+		if borderTop && text != "" {
+			cellOption.Border = gopdf.Bottom
+		}
+
+		rect := &gopdf.Rect{
+			H: layout.rowTableH,
+			W: width,
+		}
+		err = pdf.CellWithOption(rect, "", cellOption)
+		if err != nil {
+			log.Fatalf("Error writing cell: %v", err)
+		}
+		pdf.SetXY(currentWriteW, rowMiddle)
+		if !borderTop{
+			err = pdf.Text(text)
+		}
+		currentWriteW += width
 	}
-	err = pdf.CellWithOption(rect, "", cellOptionBottom)
-	currentWriteW += layout.cuoW
-	currentWriteW += layout.cpeFecEmiW
-	currentWriteW += layout.cpeFecVenW
-	currentWriteW += layout.cpeTipoW
-	currentWriteW += layout.cpeSerieW
-	currentWriteW += layout.cpeNumW
-	currentWriteW += layout.cliDocTipoW
-	currentWriteW += layout.cliDocNumW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	if !goingComing {
-		err = pdf.Text("VAN")
-	} else {
-		err = pdf.Text("VIENEN")
-	}
-	currentWriteW += layout.cliApeNomW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumMtoValFactExpo))
-	currentWriteW += layout.valFacOExpW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumBase))
-	currentWriteW += layout.baseImpW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumIgv))
-	currentWriteW += layout.igvW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumExonerada))
-	currentWriteW += layout.totalExoW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumInafecta))
-	currentWriteW += layout.totalInaW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumIsc))
-	currentWriteW += layout.iscW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumBase))
-	currentWriteW += layout.opBaseW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumBaseIvap))
-	currentWriteW += layout.opIVAPW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumIcbper))
-	currentWriteW += layout.icbW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumOtros))
-	currentWriteW += layout.otrosW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(fmt.Sprintf("%.2f", sumMtoTotalCp))
-	currentWriteW += layout.impTotalW
-	currentWriteW += layout.tcW
-	currentWriteW += layout.refComFec
-	currentWriteW += layout.refComTip
-	currentWriteW += layout.refComSer
+	pdf.SetLineWidth(0)
+	writeCell(layout.cuoW, "", false)
+	writeCell(layout.cpeFecEmiW, "", false)
+	writeCell(layout.cpeFecVenW, "", false)
+	writeCell(layout.cpeTipoW, "", false)
+	writeCell(layout.cpeSerieW, "", false)
+	writeCell(layout.cpeNumW, "", false)
+	writeCell(layout.cliDocTipoW, "", false)
+	writeCell(layout.cliDocNumW, "", false)
+	writeCell(layout.cliApeNomW, "TOTAL", false)
+	writeCell(layout.valFacOExpW, fmt.Sprintf("%.2f", sumMtoValFactExpo), false)
+	writeCell(layout.baseImpW, fmt.Sprintf("%.2f", sumBase), false)
+	writeCell(layout.igvW, fmt.Sprintf("%.2f", sumIgv), false)
+	writeCell(layout.totalExoW, fmt.Sprintf("%.2f", sumExonerada), false)
+	writeCell(layout.totalInaW, fmt.Sprintf("%.2f", sumInafecta), false)
+	writeCell(layout.iscW, fmt.Sprintf("%.2f", sumIsc), false)
+	writeCell(layout.opBaseW, fmt.Sprintf("%.2f", sumBase), false)
+	writeCell(layout.opIVAPW, fmt.Sprintf("%.2f", sumBaseIvap), false)
+	writeCell(layout.icbW, fmt.Sprintf("%.2f", sumIcbper), false)
+	writeCell(layout.otrosW, fmt.Sprintf("%.2f", sumOtros), false)
+	writeCell(layout.impTotalW, fmt.Sprintf("%.2f", sumMtoTotalCp), false)
+	writeCell(layout.tcW, "", false)
+	writeCell(layout.refComFec, "", false)
+	writeCell(layout.refComTip, "", false)
+	writeCell(layout.refComSer, "", false)
+
+	// Mover a la siguiente fila
+	locationY += layout.rowTableH
+	currentWriteW = layout.marginX + marginText
+	// Escribir en la nueva fila con borde superior
+	writeCell(layout.cuoW, "", true)
+	writeCell(layout.cpeFecEmiW, "", true)
+	writeCell(layout.cpeFecVenW, "", true)
+	writeCell(layout.cpeTipoW, "", true)
+	writeCell(layout.cpeSerieW, "", true)
+	writeCell(layout.cpeNumW, "", true)
+	writeCell(layout.cliDocTipoW, "", true)
+	writeCell(layout.cliDocNumW, "", true)
+	writeCell(layout.cliApeNomW, "", true)
+	writeCell(layout.valFacOExpW, "0", true)
+	writeCell(layout.baseImpW, "0", true)
+	writeCell(layout.igvW, "0", true)
+	writeCell(layout.totalExoW, "0", true)
+	writeCell(layout.totalInaW, "0", true)
+	writeCell(layout.iscW, "0", true)
+	writeCell(layout.opBaseW, "0", true)
+	writeCell(layout.opIVAPW, "0", true)
+	writeCell(layout.icbW, "0", true)
+	writeCell(layout.otrosW, "0", true)
+	writeCell(layout.impTotalW, "0", true)
+	writeCell(layout.tcW, "", true)
+	writeCell(layout.refComFec, "", true)
+	writeCell(layout.refComTip, "", true)
+	writeCell(layout.refComSer, "", true)
+
 	return err
 }
