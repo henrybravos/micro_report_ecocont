@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package v1;
+
+message JournalEntry {
+  string id = 1;
+  string codigo = 2;
+  string denominacion = 3;
+  string empresa_id = 4;
+  string efe = 5;
+  string smvn = 6;
+  string smve = 7;
+  string tipo = 8;
+  string tipo_id = 9;
+  bool esf = 10;
+  bool erf = 11;
+  bool ern = 12;
+  bool efle = 13;
+  bool ecp = 14;
+  string cierre_id = 15;
+  int32 sequence = 16;
+  string created_at = 17;
+  string updated_at = 18;
+  string deleted_at = 19;
+  float iidebe = 20;
+  float iihaber = 21;
+  float debe = 22;
+  float haber = 23;
+}
+message RetrieveJournalReportResponse {
+  repeated JournalEntry journals = 1;
+}
+message RetrieveJournalReportRequest {
+  string business_id = 1;
+  string period = 2;
+  bool is_consolidated = 3;
+  bool include_close = 4;
+  bool include_cu_ba= 5;
+}
+service JournalService {
+  rpc RetrieveJournalReport (RetrieveJournalReportRequest) returns (RetrieveJournalReportResponse);
+}

@@ -30,12 +30,18 @@ func main() {
 
 	salesRepo := repositories.NewSalesRepository(dbConnection)
 	businessRepo := repositories.NewBusinessRepository(dbConnection)
+	journalRepo := repositories.NewJournalRepository(dbConnection)
 
 	salesServer := &services.SalesServer{
 		SalesRepo:    salesRepo,
 		BusinessRepo: businessRepo,
 	}
 	path, handler := v1connect.NewSalesServiceHandler(salesServer)
+	mux.Handle(path, handler)
+	journalServer := &services.JournalServer{
+		JournalRepo: journalRepo,
+	}
+	path, handler = v1connect.NewJournalServiceHandler(journalServer)
 	mux.Handle(path, handler)
 
 	mux.Handle("/tmp/", http.StripPrefix("/tmp/", http.FileServer(http.Dir("tmp"))))
