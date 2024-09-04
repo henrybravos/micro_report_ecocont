@@ -78,3 +78,17 @@ available for 5 minutes
 | `includeClose`           | `bool`   | include close report, DEFAULT: false                                       |
 
 **return:** proto []JournalEntries
+
+### Balance Cash  "Libro caja"
+
+```http
+  POST /v1.CashBookService/RetrieveCashBook
+```
+
+| Parameter              | Type       | Description                                                                |
+|:-----------------------|:-----------|:---------------------------------------------------------------------------|
+| `period`               | `string`   | **Required**. Period for retrieve, eg: 2024-01                             |
+| `businessId`           | `string`   | **Required**. Company for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef |
+| `accountIds`           | `[]string` | **Required**. financial accounts list, eg ["ID"]                           |
+
+**return:** proto []CashBook and []AccountBalance

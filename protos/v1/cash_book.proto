@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package v1;
+message AccountBalance {
+  string account_id = 1;
+  float amount  = 2;
+}
+message LCash {
+  string c_id = 1;
+  string c_periodo = 2;
+  string o_cuo_tipo = 3;
+  string c_identificador = 4;
+  string pc_codigo = 5;
+  string pc_denominacion = 6;
+  string c_centro_costo_id = 7;
+  string tm_codigo = 8;
+  string tc_codigo = 9;
+  string o_serie = 10;
+  string o_correlativo = 11;
+  string o_fecha_contable = 12;
+  string o_fecha_vencimiento = 13;
+  string o_fecha_emision = 14;
+  string pg_fecha = 15;
+  string pg_glosa = 16;
+  string o_glosa = 17;
+  string o_glosa_referencia = 18;
+  float c_debe = 19;
+  float c_haber = 20;
+  string o_dato_estructurado = 21;
+  string c_estado = 22;
+  string o_estado_le = 23;
+  string o_observaciones = 24;
+  float o_tipo_cambio = 25;
+  string o_codigo_libro = 26;
+  string o_periodo  = 27;
+  float pg_tipo_cambio = 28;
+  string pg_fecha_o_fecha_emision = 29;
+}
+message RetrieveCashBookResponse {
+  repeated AccountBalance account_balances = 1;
+  repeated LCash cash_books = 2;
+}
+message RetrieveCashBookRequest {
+  string business_id = 1;
+  string period = 2;
+  repeated string account_ids = 3;
+}
+service CashBookService {
+  rpc RetrieveCashBook (RetrieveCashBookRequest) returns (RetrieveCashBookResponse);
+}
