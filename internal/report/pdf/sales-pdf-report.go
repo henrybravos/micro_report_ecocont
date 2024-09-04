@@ -3,6 +3,7 @@ package pdf
 import (
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"time"
 
@@ -143,7 +144,6 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 	)
 
 	bandComings := false
-	bandNumCells := false
 	lensales := len(sales)
 	for _, sale := range sales {
 		lensales--
@@ -153,26 +153,23 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 				return "", err
 			}
 			bandComings = true
-			bandNumCells = false
 		}
 		numCells := determineNumCells(sale)
+		locationY := pdf.GetY() + layout.rowTableH
+
 		if numCells > 1 {
-			bandNumCells = true
+			locationY = pdf.GetY() + 2*layout.rowTableH * float64(numCells)/3
 		}
-		locationY := pdf.GetY() + layout.rowTableH*float64(numCells)
 		if bandComings {
 			//for comming true and for going false
 			locationY += layout.rowTableH
-			err = generateComingsAndGoings(&pdf, locationY, layout, true, bandNumCells, float64(numCells), sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
+			err = generateComingsAndGoings(&pdf, locationY, layout, true, float64(numCells), sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
 			if err != nil {
 				return "", err
 			}
 			bandComings = false
-			bandNumCells = false
-
 		}
-		err = generateRowTable(&pdf, sale, locationY, layout)
-
+		err = generateRowTable(&pdf, sale, locationY, layout, numCells)
 		sumMtoValFactExpo += sale.MtoValFactExpo
 		sumBase += sale.Base
 		sumIgv += sale.Igv
@@ -186,7 +183,7 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 
 		//check for goings (van)
 		if pdf.GetY()+2*layout.rowTableH*2+layout.marginY > layout.pageH && lensales > 0 {
-			err = generateComingsAndGoings(&pdf, locationY, layout, false, bandNumCells, 1, sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
+			err = generateComingsAndGoings(&pdf, locationY, layout, false, 1, sumMtoValFactExpo, sumBase, sumIgv, sumExonerada, sumInafecta, sumIsc, sumBaseIvap, sumIcbper, sumOtros, sumMtoTotalCp)
 		}
 		//for total
 		if lensales == 0 {
@@ -220,8 +217,9 @@ func checkNewPage(pdf *gopdf.GoPdf, layout layout) bool {
 	return pdf.GetY()+2*layout.rowTableH+2*layout.marginY > layout.pageH
 }
 func determineNumCells(sale *v1.SalesReport) int {
-	numCells := len(sale.RazonSocial)/50 + 1
-	return numCells
+    totalLength := len(sale.RazonSocial)
+    numCells := int(math.Ceil(float64(totalLength) / 55.0))
+    return numCells
 }
 func generatePage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
 	pdf.AddPage()
@@ -461,9 +459,12 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 	err = pdf.CellWithOption(rect, "NÚMERO", cellOptionAllBorderCenter)
 	return err
 }
-func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64, layout layout) error {
+func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64, layout layout, numCells int) error {
 	err := pdf.SetFont("arial", "", 4.5)
 	rowMiddle := locationY + 2*layout.rowTableH/3
+	if numCells > 1 {
+		rowMiddle = locationY + layout.rowTableH/4
+	}
 	rowW := layout.pageW - layout.marginX*2
 	marginText := 0.05
 	currentWriteW := layout.marginX + marginText
@@ -505,10 +506,10 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	currentWriteW += layout.cliDocNumW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	lenRazon := len(sale.RazonSocial)
-	if lenRazon > 50 {
-		pdf.SetXY(currentWriteW, rowMiddle-0.25)
+	if lenRazon > 55 {
+		pdf.SetXY(currentWriteW, rowMiddle - (float64(numCells) - 1)*0.16)
 		rect := &gopdf.Rect{
-			H: layout.rowTableH * 3,
+			H: layout.rowTableH * float64(numCells),
 			W: layout.cliApeNomW,
 		}
 		err = pdf.MultiCell(rect, sale.RazonSocial)
@@ -516,29 +517,28 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 		err = pdf.Text(sale.RazonSocial)
 	}
 	currentWriteW += layout.cliApeNomW
-
-	alignRight := func(value float32, width float64) {
-		text := ""
-		if value != 0 {
-			text = fmt.Sprintf("%.2f", value)
-		}
-		textWidth, _ := pdf.MeasureTextWidth(text)
-		pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
-		err = pdf.Text(text)
-		currentWriteW += width
-	}
-	alignRight(sale.MtoValFactExpo, layout.valFacOExpW)
-	alignRight(sale.Base, layout.baseImpW)
-	alignRight(sale.Igv, layout.igvW)
-	alignRight(sale.Exonerada, layout.totalExoW)
-	alignRight(sale.Inafecta, layout.totalInaW)
-	alignRight(sale.Isc, layout.iscW)
-	alignRight(sale.Base, layout.opBaseW)
-	alignRight(sale.BaseIvap, layout.opIVAPW)
-	alignRight(sale.Icbper, layout.icbW)
-	alignRight(sale.Otros, layout.otrosW)
-	alignRight(sale.MtoTotalCp, layout.impTotalW)
-
+	alignRight(pdf, sale.MtoValFactExpo, layout.valFacOExpW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.valFacOExpW
+	alignRight(pdf, sale.Base, layout.baseImpW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.baseImpW
+	alignRight(pdf, sale.Igv, layout.igvW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.igvW
+	alignRight(pdf, sale.Exonerada, layout.totalExoW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.totalExoW
+	alignRight(pdf, sale.Inafecta, layout.totalInaW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.totalInaW
+	alignRight(pdf, sale.Isc, layout.iscW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.iscW
+	alignRight(pdf, sale.Base, layout.opBaseW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.opBaseW
+	alignRight(pdf, sale.BaseIvap, layout.opIVAPW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.opIVAPW
+	alignRight(pdf, sale.Icbper, layout.icbW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.icbW
+	alignRight(pdf, sale.Otros, layout.otrosW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.otrosW
+	alignRight(pdf, sale.MtoTotalCp, layout.impTotalW, currentWriteW, rowMiddle, marginText)
+	currentWriteW += layout.impTotalW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	if sale.TipoCambio == 1 {
 		err = pdf.Text("")
@@ -560,38 +560,34 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	return err
 }
 
-func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout, goingComing bool, bandComings bool, numCells float64,
+func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout, goingComing bool, numCells float64,
 	sumMtoValFactExpo float32, sumBase float32,
 	sumIgv float32, sumExonerada float32, sumInafecta float32,
 	sumIsc float32, sumBaseIvap float32, sumIcbper float32, sumOtros float32, sumMtoTotalCp float32) error {
 	if !goingComing {
 		locationY += layout.rowTableH
 	} else {
-		if bandComings {
-			locationY -= layout.rowTableH*numCells + 0.14
-		} else {
-			locationY -= layout.rowTableH*numCells + 0.1
+		offset := 0.1
+		if numCells > 1 {
+			offset = 0.01 * (numCells - 1)
 		}
+		locationY -= layout.rowTableH*numCells + offset
 	}
 	err := pdf.SetFont("arialB", "", 4.5)
 	if err != nil {
 		log.Print(err.Error())
 	}
 	rowMiddle := locationY + 2*layout.rowTableH/3
-	if bandComings {
+	if numCells > 1 {
 		rowMiddle = locationY + 2*layout.rowTableH/4
 	}
-
 	marginText := 0.075
 	currentWriteW := layout.marginX + marginText
-
-	// Función para escribir una celda con borde
-	writeCell := func(width float64, text string) {
+	writeCell := func(width float64, text string, alignRigth bool) {
 		pdf.SetXY(currentWriteW, locationY)
 		cellOption := gopdf.CellOption{
 			Align: gopdf.Left | gopdf.Middle,
 		}
-
 		if !goingComing && text != "" && text != "VAN" {
 			pdf.SetStrokeColor(50, 50, 50)
 			cellOption.Border = gopdf.Top
@@ -600,7 +596,6 @@ func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout
 			pdf.SetStrokeColor(222, 219, 218)
 			cellOption.Border = gopdf.Bottom
 		}
-
 		rect := &gopdf.Rect{
 			H: layout.rowTableH,
 			W: width,
@@ -614,59 +609,51 @@ func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout
 		} else {
 			pdf.SetXY(currentWriteW, rowMiddle+0.03)
 		}
-		err = pdf.Text(text)
-		if err != nil {
-			log.Fatalf("Error writing text: %v", err)
+		if alignRigth {
+			value, err := strconv.ParseFloat(text, 32)
+			if err != nil {
+				log.Fatalf("Error converting text to float32: %v", err)
+			}
+			alignRight(pdf, float32(value), width, currentWriteW, rowMiddle, marginText)
+		} else {
+			err = pdf.Text(text)
+
+			if err != nil {
+				log.Fatalf("Error writing text: %v", err)
+			}
 		}
 		currentWriteW += width
 	}
-
-	// Función para alinear texto a la derecha
-	alignRight := func(value float32, width float64) {
-		text := ""
-		if value != 0 {
-			text = fmt.Sprintf("%.2f", value)
-		}
-		textWidth, _ := pdf.MeasureTextWidth(text)
-		pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
-		err = pdf.Text(text)
-		if err != nil {
-			log.Fatalf("Error writing text: %v", err)
-		}
-		currentWriteW += width
-	}
-
 	pdf.SetLineWidth(0)
-
-	writeCell(layout.cuoW, "")
-	writeCell(layout.cpeFecEmiW, "")
-	writeCell(layout.cpeFecVenW, "")
-	writeCell(layout.cpeTipoW, "")
-	writeCell(layout.cpeSerieW, "")
-	writeCell(layout.cpeNumW, "")
-	writeCell(layout.cliDocTipoW, "")
-	writeCell(layout.cliDocNumW, "")
+	writeCell(layout.cuoW, "", false)
+	writeCell(layout.cpeFecEmiW, "", false)
+	writeCell(layout.cpeFecVenW, "", false)
+	writeCell(layout.cpeTipoW, "", false)
+	writeCell(layout.cpeSerieW, "", false)
+	writeCell(layout.cpeNumW, "", false)
+	writeCell(layout.cliDocTipoW, "", false)
+	writeCell(layout.cliDocNumW, "", false)
 	writeCell(layout.cliApeNomW, func() string {
 		if !goingComing {
 			return "VAN"
 		}
 		return "VIENEN"
-	}())
-	alignRight(sumMtoValFactExpo, layout.valFacOExpW)
-	alignRight(sumBase, layout.baseImpW)
-	alignRight(sumIgv, layout.igvW)
-	alignRight(sumExonerada, layout.totalExoW)
-	alignRight(sumInafecta, layout.totalInaW)
-	alignRight(sumIsc, layout.iscW)
-	alignRight(sumBase, layout.opBaseW)
-	alignRight(sumBaseIvap, layout.opIVAPW)
-	alignRight(sumIcbper, layout.icbW)
-	alignRight(sumOtros, layout.otrosW)
-	alignRight(sumMtoTotalCp, layout.impTotalW)
-	writeCell(layout.tcW, "")
-	writeCell(layout.refComFec, "")
-	writeCell(layout.refComTip, "")
-	writeCell(layout.refComSer, "")
+	}(), false)
+	writeCell(layout.valFacOExpW, fmt.Sprintf("%.2f", sumMtoValFactExpo), true)
+	writeCell(layout.baseImpW, fmt.Sprintf("%.2f", sumBase), true)
+	writeCell(layout.igvW, fmt.Sprintf("%.2f", sumIgv), true)
+	writeCell(layout.totalExoW, fmt.Sprintf("%.2f", sumExonerada), true)
+	writeCell(layout.totalInaW, fmt.Sprintf("%.2f", sumInafecta), true)
+	writeCell(layout.iscW, fmt.Sprintf("%.2f", sumIsc), true)
+	writeCell(layout.opBaseW, fmt.Sprintf("%.2f", sumBase), true)
+	writeCell(layout.opIVAPW, fmt.Sprintf("%.2f", sumBaseIvap), true)
+	writeCell(layout.icbW, fmt.Sprintf("%.2f", sumIcbper), true)
+	writeCell(layout.otrosW, fmt.Sprintf("%.2f", sumOtros), true)
+	writeCell(layout.impTotalW, fmt.Sprintf("%.2f", sumMtoTotalCp), true)
+	writeCell(layout.tcW, "", false)
+	writeCell(layout.refComFec, "", false)
+	writeCell(layout.refComTip, "", false)
+	writeCell(layout.refComSer, "", false)
 
 	return err
 }
@@ -678,44 +665,24 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 	if err != nil {
 		log.Print(err.Error())
 	}
-
 	rowMiddle := locationY + 2*layout.rowTableH
 	marginText := 0.075
 	currentWriteW := layout.marginX + marginText
-
-	// Función para alinear texto a la derecha
-	alignRight := func(value float32, width float64) {
-		text := ""
-		if value != 0 {
-			text = fmt.Sprintf("%.2f", value)
-		}
-		textWidth, _ := pdf.MeasureTextWidth(text)
-		pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
-		err = pdf.Text(text)
-		if err != nil {
-			log.Fatalf("Error writing text: %v", err)
-		}
-	}
-
 	writeCell := func(width float64, text string, borderTop bool, alignRigth bool) {
 		margin := 0.0
 		if borderTop {
 			margin = 0.03
 		}
-
 		pdf.SetXY(currentWriteW, locationY+margin)
 		cellOption := gopdf.CellOption{
 			Align: gopdf.Left | gopdf.Middle,
 		}
-
-		if !borderTop && text != "" && text != "TOTAL" {
-			pdf.SetStrokeColor(50, 50, 50)
-			cellOption.Border = gopdf.Bottom
+		if text != "" {
+			if borderTop || text != "TOTAL" {
+				pdf.SetStrokeColor(50, 50, 50)
+				cellOption.Border = gopdf.Bottom
+			}
 		}
-		if borderTop && text != "" {
-			cellOption.Border = gopdf.Bottom
-		}
-
 		rect := &gopdf.Rect{
 			H: layout.rowTableH,
 			W: width,
@@ -726,19 +693,21 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 		}
 		pdf.SetXY(currentWriteW, rowMiddle)
 		if !borderTop {
-			//err = pdf.Text(text)
 			if alignRigth {
 				value, err := strconv.ParseFloat(text, 32)
 				if err != nil {
 					log.Fatalf("Error converting text to float: %v", err)
 				}
-				alignRight(float32(value), width)
+				alignRight(pdf, float32(value), width, currentWriteW, rowMiddle, marginText)
+			} else if text == "TOTAL" {
+				err = pdf.Text(text)
 			}
+			currentWriteW += width
 		}
-		currentWriteW += width
 
 		// Si borderTop es true, crea una nueva celda con borde superior y margen
 		if text != "" && borderTop {
+			currentWriteW += width
 			margin := 0.06 // Define el margen que desees
 			pdf.SetXY(currentWriteW-width, locationY+layout.rowTableH+margin)
 			cellOptionTop := gopdf.CellOption{
@@ -753,6 +722,8 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 			if err != nil {
 				log.Fatalf("Error writing top border cell: %v", err)
 			}
+		} else if text == "" && borderTop {
+			currentWriteW += width
 		}
 	}
 	pdf.SetLineWidth(0)
@@ -780,7 +751,6 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 	writeCell(layout.refComFec, "", false, false)
 	writeCell(layout.refComTip, "", false, false)
 	writeCell(layout.refComSer, "", false, false)
-
 	// Mover a la siguiente fila
 	locationY += layout.rowTableH
 	currentWriteW = layout.marginX + marginText
@@ -811,4 +781,14 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 	writeCell(layout.refComSer, "", true, false)
 
 	return err
+}
+
+func alignRight(pdf *gopdf.GoPdf, value float32, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
+	text := ""
+	if value != 0 {
+		text = fmt.Sprintf("%.2f", value)
+	}
+	textWidth, _ := pdf.MeasureTextWidth(text)
+	pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
+	pdf.Text(text)
 }
