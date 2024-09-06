@@ -27,6 +27,7 @@ type layout struct {
 	pageH        float64
 	headerTableH float64
 	rowTableH    float64
+	textH        float64
 	cuoW         float64
 
 	cpeInfoW   float64
@@ -70,13 +71,14 @@ type layout struct {
 func (p *SalesGenerator) initializeLayout() layout {
 	return layout{
 
-		headerPageH:  1.4,
+		headerPageH:  2,
 		marginX:      0.5,
-		marginY:      0.25,
+		marginY:      0.35,
 		pageW:        29.7,
 		pageH:        21.0,
 		headerTableH: 1.5,
-		rowTableH:    0.25,
+		rowTableH:    0.35,
+		textH:        0.18,
 		cuoW:         1.2,
 
 		cpeInfoW:   4.3,
@@ -158,7 +160,8 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 		locationY := pdf.GetY() + layout.rowTableH
 
 		if numCells > 1 {
-			locationY = pdf.GetY() + 2*layout.rowTableH * float64(numCells)/3
+			//locationY = pdf.GetY() + 2*layout.rowTableH*float64(numCells)/3
+			locationY = pdf.GetY() + layout.rowTableH + float64(numCells - 1) * layout.textH
 		}
 		if bandComings {
 			//for comming true and for going false
@@ -217,9 +220,21 @@ func checkNewPage(pdf *gopdf.GoPdf, layout layout) bool {
 	return pdf.GetY()+2*layout.rowTableH+2*layout.marginY > layout.pageH
 }
 func determineNumCells(sale *v1.SalesReport) int {
-    totalLength := len(sale.RazonSocial)
-    numCells := int(math.Ceil(float64(totalLength) / 55.0))
-    return numCells
+	razonSocialRows := calculateRows(len(sale.RazonSocial), 35.0)
+	cuoRows := calculateRows(len(sale.Cuo), 10)
+
+	// Crear un slice con todos los valores de filas
+	rows := []int{razonSocialRows, cuoRows}
+
+	// Encontrar el máximo número de filas
+	maxRows := rows[0]
+	for _, row := range rows[1:] {
+		maxRows = int(math.Max(float64(maxRows), float64(row)))
+	}
+	return maxRows
+}
+func calculateRows(length int, cellMaxCharacters float64) int {
+	return int(math.Ceil(float64(length) / cellMaxCharacters))
 }
 func generatePage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
 	pdf.AddPage()
@@ -231,7 +246,7 @@ func generatePage(business *repositories.Business, period string, pdf *gopdf.GoP
 	return err
 }
 func generateHeaderPage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) (err error) {
-	err = pdf.SetFont("arialB", "", 6)
+	err = pdf.SetFont("arialB", "", 10)
 	rect := &gopdf.Rect{
 		H: 0.5,
 		W: layout.pageW,
@@ -240,16 +255,16 @@ func generateHeaderPage(business *repositories.Business, period string, pdf *gop
 		Align: gopdf.Middle | gopdf.Center,
 	}
 	err = pdf.CellWithOption(rect, business.BusinessName, cellOptionCenter)
-	pdf.SetXY(0, 0.5)
+	pdf.SetXY(0, 0.7)
 	err = pdf.CellWithOption(rect, "R.U.C.: "+business.RUC, cellOptionCenter)
-	pdf.SetXY(0, 0.75)
+	pdf.SetXY(0, 1.1)
 	err = pdf.CellWithOption(rect, business.Address, cellOptionCenter)
-	pdf.SetXY(0, 1)
+	pdf.SetXY(0, 1.5)
 	err = pdf.CellWithOption(rect, "REGISTRO DE VENTAS DEL MES DE "+period, cellOptionCenter)
 	return
 }
 func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
-	err := pdf.SetFont("arialB", "", 4.5)
+	err := pdf.SetFont("arial", "", 5.5)
 	cellOptionAllBorderCenter := gopdf.CellOption{
 		Border: gopdf.AllBorders,
 		Align:  gopdf.Middle | gopdf.Center,
@@ -460,11 +475,8 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 	return err
 }
 func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64, layout layout, numCells int) error {
-	err := pdf.SetFont("arial", "", 4.5)
-	rowMiddle := locationY + 2*layout.rowTableH/3
-	if numCells > 1 {
-		rowMiddle = locationY + layout.rowTableH/4
-	}
+	err := pdf.SetFont("arial", "", 7)
+	rowMiddle := locationY + layout.textH
 	rowW := layout.pageW - layout.marginX*2
 	marginText := 0.05
 	currentWriteW := layout.marginX + marginText
@@ -481,7 +493,17 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	}
 	err = pdf.CellWithOption(rect, "", cellOptionBottom)
 	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.Cuo)
+	
+	if len(sale.Cuo)> 10{
+		pdf.SetXY(currentWriteW, rowMiddle - layout.textH*float64(numCells) - marginText * float64(numCells-1))
+		rect := &gopdf.Rect{
+			H: layout.rowTableH * float64(numCells),
+			W: layout.cuoW,
+		}
+		err = pdf.MultiCell(rect, sale.Cuo)
+	}else{
+		err = pdf.Text(sale.Cuo)
+	}
 	currentWriteW += layout.cuoW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.FecEmision)
@@ -504,16 +526,16 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.NumDocIdentidadClient)
 	currentWriteW += layout.cliDocNumW
-	pdf.SetXY(currentWriteW, rowMiddle)
 	lenRazon := len(sale.RazonSocial)
-	if lenRazon > 55 {
-		pdf.SetXY(currentWriteW, rowMiddle - (float64(numCells) - 1)*0.16)
+	if lenRazon > 35 {
+		pdf.SetXY(currentWriteW, rowMiddle - layout.textH*float64(numCells) - marginText * float64(numCells-1))
 		rect := &gopdf.Rect{
 			H: layout.rowTableH * float64(numCells),
 			W: layout.cliApeNomW,
 		}
 		err = pdf.MultiCell(rect, sale.RazonSocial)
 	} else {
+		pdf.SetXY(currentWriteW, rowMiddle)
 		err = pdf.Text(sale.RazonSocial)
 	}
 	currentWriteW += layout.cliApeNomW
@@ -573,7 +595,7 @@ func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout
 		}
 		locationY -= layout.rowTableH*numCells + offset
 	}
-	err := pdf.SetFont("arialB", "", 4.5)
+	err := pdf.SetFont("arialB", "", 7)
 	if err != nil {
 		log.Print(err.Error())
 	}
@@ -661,7 +683,7 @@ func generateComingsAndGoings(pdf *gopdf.GoPdf, locationY float64, layout layout
 func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactExpo float32, sumBase float32,
 	sumIgv float32, sumExonerada float32, sumInafecta float32, sumIsc float32, sumBaseIvap float32,
 	sumIcbper float32, sumOtros float32, sumMtoTotalCp float32) error {
-	err := pdf.SetFont("arialB", "", 4.5)
+	err := pdf.SetFont("arialB", "", 7)
 	if err != nil {
 		log.Print(err.Error())
 	}
