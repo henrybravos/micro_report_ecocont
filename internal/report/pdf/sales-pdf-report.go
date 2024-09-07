@@ -11,7 +11,7 @@ import (
 	"github.com/henrybravo/micro-report/pkg/files"
 	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
 	"github.com/signintech/gopdf"
-	"github.com/dustin/go-humanize"
+	"strings"
 )
 
 type SalesGenerator struct{}
@@ -80,14 +80,14 @@ func (p *SalesGenerator) initializeLayout() layout {
 		headerTableH: 1.5,
 		rowTableH:    0.35,
 		textH:        0.18,
-		cuoW:         1.2,
+		cuoW:         1.4,
 
-		cpeInfoW:   4.3,
-		cpeFecEmiW: 4.3 / 4,
-		cpeFecVenW: 4.3 / 4,
-		cpeTipoW:   4.3 / 6,
-		cpeSerieW:  4.3 / 6,
-		cpeNumW:    4.3 / 6,
+		cpeInfoW:   4.1,
+		cpeFecEmiW: 4.1 / 4 + 0.15,
+		cpeFecVenW: 4.1 / 4 + 0.15,
+		cpeTipoW:   4.1 / 6 - 0.3,
+		cpeSerieW:  4.1 / 6,
+		cpeNumW:    4.1 / 6,
 
 		clienteInfoW: 6.5,
 		cliDocTipoW:  6.5 / 8,
@@ -222,7 +222,7 @@ func checkNewPage(pdf *gopdf.GoPdf, layout layout) bool {
 }
 func determineNumCells(sale *v1.SalesReport) int {
 	razonSocialRows := calculateRows(len(sale.RazonSocial), 35.0)
-	cuoRows := calculateRows(len(sale.Cuo), 10)
+	cuoRows := calculateRows(len(sale.Cuo), 11)
 
 	// Crear un slice con todos los valores de filas
 	rows := []int{razonSocialRows, cuoRows}
@@ -299,22 +299,34 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 	pdf.SetXY(layout.cuoW+layout.marginX, (layout.headerTableH/2)+layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
-		W: layout.cpeInfoW / 4,
+		W: layout.cpeFecEmiW,
 	}
 	err = pdf.CellWithOption(rect, "FECHA DE", cellOptionBorderRCenter)
-	pdf.SetXY(pdf.GetX()-layout.cpeInfoW/4, pdf.GetY()+layout.headerTableH/4)
+	pdf.SetXY(pdf.GetX()-layout.cpeFecEmiW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "EMISIÓN", cellOptionBorderRBCenter)
 	pdf.SetXY(pdf.GetX(), pdf.GetY()-layout.headerTableH/4)
+	rect = &gopdf.Rect{
+		H: layout.headerTableH / 4,
+		W: layout.cpeFecVenW,
+	}
 	err = pdf.CellWithOption(rect, "FECHA DE", cellOptionCenter)
-	pdf.SetXY(pdf.GetX()-layout.cpeInfoW/4, pdf.GetY()+layout.headerTableH/4)
+	pdf.SetXY(pdf.GetX()-layout.cpeFecVenW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "VENCIMIENTO", cellOptionBorderRBCenter)
 	pdf.SetXY(pdf.GetX(), pdf.GetY()-layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 2,
-		W: layout.cpeInfoW / 6,
+		W: layout.cpeTipoW,
 	}
 	err = pdf.CellWithOption(rect, "TIPO", cellOptionAllBorderCenter)
+	rect = &gopdf.Rect{
+		H: layout.headerTableH / 2,
+		W: layout.cpeSerieW,
+	}
 	err = pdf.CellWithOption(rect, "SERIE", cellOptionAllBorderCenter)
+	rect = &gopdf.Rect{
+		H: layout.headerTableH / 2,
+		W: layout.cpeNumW,
+	}
 	err = pdf.CellWithOption(rect, "NÚMERO", cellOptionAllBorderCenter)
 	pdf.SetXY(layout.cuoW+layout.cpeInfoW+layout.marginX, layout.headerPageH)
 	err = pdf.CellWithOption(&gopdf.Rect{
@@ -489,7 +501,7 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	pdf.SetLineWidth(0)
 	cellOptionBottom := gopdf.CellOption{
 		Border: gopdf.Bottom,
-		Align:  gopdf.Left | gopdf.Middle,
+		Align:  gopdf.Middle | gopdf.Center, // no se está aplicando correctamente
 	}
 	rect := &gopdf.Rect{
 		H: layout.rowTableH,
@@ -497,9 +509,8 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	}
 	err = pdf.CellWithOption(rect, "", cellOptionBottom)
 	pdf.SetXY(currentWriteW, rowMiddle)
-	
-	if len(sale.Cuo)> 10{
-		pdf.SetXY(currentWriteW, rowMiddle - (layout.textH * float64(calculateRows(len(sale.Cuo), 10)-1) + marginText*float64(calculateRows(len(sale.Cuo), 10)-1)))
+	if len(sale.Cuo)> 11{
+		pdf.SetXY(currentWriteW, rowMiddle - (layout.textH * float64(calculateRows(len(sale.Cuo), 11)-1) + marginText*float64(calculateRows(len(sale.Cuo), 11)-1)))
 		rect := &gopdf.Rect{
 			H: layout.rowTableH * float64(numCells),
 			W: layout.cuoW,
@@ -515,17 +526,21 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.FechaVencimiento)
 	currentWriteW += layout.cpeFecVenW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.CodigoTipoCdp)
+	//pdf.SetXY(currentWriteW, rowMiddle)
+	//err = pdf.Text(sale.CodigoTipoCdp)
+	alignCenter(pdf, sale.CodigoTipoCdp, layout.cpeTipoW, currentWriteW, rowMiddle, marginText)
 	currentWriteW += layout.cpeTipoW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.NumSerieCdp)
+	//pdf.SetXY(currentWriteW, rowMiddle)
+	//err = pdf.Text(sale.NumSerieCdp)
+	alignCenter(pdf, sale.NumSerieCdp, layout.cpeSerieW, currentWriteW, rowMiddle, marginText)
 	currentWriteW += layout.cpeSerieW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text(sale.NumCdp)
+	//pdf.SetXY(currentWriteW, rowMiddle)
+	//err = pdf.Text(sale.NumCdp)
+	alignCenter(pdf, sale.NumCdp, layout.cpeNumW, currentWriteW, rowMiddle, marginText)
 	currentWriteW += layout.cpeNumW
-	pdf.SetXY(currentWriteW, rowMiddle)
-	err = pdf.Text("  " + sale.CodTipoDocIdentidad)
+	//pdf.SetXY(currentWriteW, rowMiddle)
+	alignCenter(pdf, sale.CodTipoDocIdentidad, layout.cliDocTipoW, currentWriteW, rowMiddle, marginText)
+	//err = pdf.Text("  " + sale.CodTipoDocIdentidad)
 	currentWriteW += layout.cliDocTipoW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.NumDocIdentidadClient)
@@ -692,7 +707,7 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 	if err != nil {
 		log.Print(err.Error())
 	}
-	rowMiddle := locationY + 2*layout.rowTableH
+	rowMiddle := locationY + 2*layout.rowTableH - layout.textH/3
 	marginText := 0.075
 	currentWriteW := layout.marginX + marginText
 	writeCell := func(width float64, text string, borderTop bool, alignRigth bool) {
@@ -810,12 +825,32 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 	return err
 }
 
-func alignRight(pdf *gopdf.GoPdf, value float32, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
-    text := ""
-    if value != 0 {
-        // Formatear el número con comas de millar
-        text = humanize.CommafWithDigits(float64(value), 2)
+func formatWithCommasAndDecimals(value float64) string {
+    parts := strings.Split(fmt.Sprintf("%.2f", value), ".")
+    integerPart := parts[0]
+    decimalPart := parts[1]
+
+    var result strings.Builder
+    n := len(integerPart)
+    for i, digit := range integerPart {
+        if i > 0 && (n-i)%3 == 0 {
+            result.WriteRune(',')
+        }
+        result.WriteRune(digit)
     }
+    return result.String() + "." + decimalPart
+}
+func alignCenter(pdf *gopdf.GoPdf, value string, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
+	textWidth, _ := pdf.MeasureTextWidth(value)
+	pdf.SetXY(currentWriteW+(width-textWidth)/2 - marginText, rowMiddle)
+	pdf.Text(value)
+}
+func alignRight(pdf *gopdf.GoPdf, value float32, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
+    if value == 0 {
+        // No imprimir nada si el valor es 0
+        return
+    }
+    text := formatWithCommasAndDecimals(float64(value))
     textWidth, _ := pdf.MeasureTextWidth(text)
     pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
     pdf.Text(text)
