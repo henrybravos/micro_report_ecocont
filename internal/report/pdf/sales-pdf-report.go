@@ -11,6 +11,7 @@ import (
 	"github.com/henrybravo/micro-report/pkg/files"
 	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
 	"github.com/signintech/gopdf"
+	"github.com/dustin/go-humanize"
 )
 
 type SalesGenerator struct{}
@@ -477,6 +478,9 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64, layout layout, numCells int) error {
 	err := pdf.SetFont("arial", "", 7)
 	rowMiddle := locationY + layout.textH
+	if numCells > 1 {
+		rowMiddle = locationY + (layout.rowTableH + layout.textH*float64(numCells-1) - layout.textH - layout.textH*float64(numCells-1))/2
+	}
 	rowW := layout.pageW - layout.marginX*2
 	marginText := 0.05
 	currentWriteW := layout.marginX + marginText
@@ -495,7 +499,7 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	pdf.SetXY(currentWriteW, rowMiddle)
 	
 	if len(sale.Cuo)> 10{
-		pdf.SetXY(currentWriteW, rowMiddle - layout.textH*float64(numCells) - marginText * float64(numCells-1))
+		pdf.SetXY(currentWriteW, rowMiddle - (layout.textH * float64(calculateRows(len(sale.Cuo), 10)-1) + marginText*float64(calculateRows(len(sale.Cuo), 10)-1)))
 		rect := &gopdf.Rect{
 			H: layout.rowTableH * float64(numCells),
 			W: layout.cuoW,
@@ -528,7 +532,8 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	currentWriteW += layout.cliDocNumW
 	lenRazon := len(sale.RazonSocial)
 	if lenRazon > 35 {
-		pdf.SetXY(currentWriteW, rowMiddle - layout.textH*float64(numCells) - marginText * float64(numCells-1))
+		//locationY + (layout.rowTableH + layout.textH*float64(numCells-1) - layout.textH - layout.textH*float64(numCells-1))/2
+		pdf.SetXY(currentWriteW, rowMiddle - (layout.textH * float64(calculateRows(len(sale.RazonSocial), 35)-1) + marginText*float64(calculateRows(len(sale.RazonSocial), 35)-1)))
 		rect := &gopdf.Rect{
 			H: layout.rowTableH * float64(numCells),
 			W: layout.cliApeNomW,
@@ -806,11 +811,12 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 }
 
 func alignRight(pdf *gopdf.GoPdf, value float32, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
-	text := ""
-	if value != 0 {
-		text = fmt.Sprintf("%.2f", value)
-	}
-	textWidth, _ := pdf.MeasureTextWidth(text)
-	pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
-	pdf.Text(text)
+    text := ""
+    if value != 0 {
+        // Formatear el número con comas de millar
+        text = humanize.CommafWithDigits(float64(value), 2)
+    }
+    textWidth, _ := pdf.MeasureTextWidth(text)
+    pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
+    pdf.Text(text)
 }
