@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package v1;
+message BankBalance {
+  string id = 1;
+  float amount  = 2;
+}
+
+message LBank {
+  string b_id = 1;
+  string b_periodo = 2;
+  string o_cuo_tipo = 3;
+  string b_identificador = 4;
+  string tef_codigo = 5;
+  string cf_cuenta = 6;
+  string o_fecha_emion = 7;
+  string pg_fecha = 8;
+  string tmp_codigo = 9;
+  string pg_glosa = 10;
+  string o_glosa = 11;
+  string td_codigo = 12;
+  string p_numero = 13;
+  string p_razon_social = 14;
+  string b_numero_transaccion = 15;
+  float b_debe = 16;
+  float b_haber = 17;
+  string b_estado = 18;
+  string pc_codigo = 19;
+  string pc_denominacion = 20;
+  string o_estado_le = 21;
+  string o_observaciones = 22;
+  float o_tipo_cambio = 23;
+  float pg_tipo_cambio = 24;
+  string pg_fecha_o_fecha_emision = 25;
+}
+
+message RetrieveBankBookResponse {
+  repeated BankBalance bank_balances = 1;
+  repeated LBank bank_books = 2;
+}
+message RetrieveBankBookRequest {
+  string business_id = 1;
+  string period = 2;
+  repeated string account_ids = 3;
+}
+service BankBookService {
+  rpc RetrieveBankBook (RetrieveBankBookRequest) returns (RetrieveBankBookResponse);
+}
