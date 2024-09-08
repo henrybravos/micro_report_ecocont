@@ -107,3 +107,19 @@ available for 5 minutes
 
 **return:** proto []BalanceBank and []LBanks
 
+
+### Balance Diario "Libro diario"
+
+```http
+  POST /v1.JournalService/RetrieveGeneralJournal
+```
+
+| Parameter              | Type       | Description                                                                |
+|:-----------------------|:-----------|:---------------------------------------------------------------------------|
+| `period`               | `string`   | **Required**. Period for retrieve, eg: 2024-01                             |
+| `businessId`           | `string`   | **Required**. Company for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef |
+| `isConsolidated`       | `bool`     | is consolidated, DEFAULT: false                                            |
+| `includeCuBa`          | `bool`     | include accounts bank, DEFAULT: false                                      |
+| `includeClose`         | `bool`     | include close report, DEFAULT: false                                       |
+
+**return:** proto []GeneralJournal

@@ -8,7 +8,7 @@ import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv1
  * Describes the file v1/journal.proto.
  */
 export const file_v1_journal = /*@__PURE__*/
-  fileDesc("ChB2MS9qb3VybmFsLnByb3RvEgJ2MSL9AgoMSm91cm5hbEVudHJ5EgoKAmlkGAEgASgJEg4KBmNvZGlnbxgCIAEoCRIUCgxkZW5vbWluYWNpb24YAyABKAkSEgoKZW1wcmVzYV9pZBgEIAEoCRILCgNlZmUYBSABKAkSDAoEc212bhgGIAEoCRIMCgRzbXZlGAcgASgJEgwKBHRpcG8YCCABKAkSDwoHdGlwb19pZBgJIAEoCRILCgNlc2YYCiABKAgSCwoDZXJmGAsgASgIEgsKA2VybhgMIAEoCBIMCgRlZmxlGA0gASgIEgsKA2VjcBgOIAEoCBIRCgljaWVycmVfaWQYDyABKAkSEAoIc2VxdWVuY2UYECABKAUSEgoKY3JlYXRlZF9hdBgRIAEoCRISCgp1cGRhdGVkX2F0GBIgASgJEhIKCmRlbGV0ZWRfYXQYEyABKAkSDgoGaWlkZWJlGBQgASgCEg8KB2lpaGFiZXIYFSABKAISDAoEZGViZRgWIAEoAhINCgVoYWJlchgXIAEoAiJDCh1SZXRyaWV2ZUpvdXJuYWxSZXBvcnRSZXNwb25zZRIiCghqb3VybmFscxgBIAMoCzIQLnYxLkpvdXJuYWxFbnRyeSKKAQocUmV0cmlldmVKb3VybmFsUmVwb3J0UmVxdWVzdBITCgtidXNpbmVzc19pZBgBIAEoCRIOCgZwZXJpb2QYAiABKAkSFwoPaXNfY29uc29saWRhdGVkGAMgASgIEhUKDWluY2x1ZGVfY2xvc2UYBCABKAgSFQoNaW5jbHVkZV9jdV9iYRgFIAEoCDJuCg5Kb3VybmFsU2VydmljZRJcChVSZXRyaWV2ZUpvdXJuYWxSZXBvcnQSIC52MS5SZXRyaWV2ZUpvdXJuYWxSZXBvcnRSZXF1ZXN0GiEudjEuUmV0cmlldmVKb3VybmFsUmVwb3J0UmVzcG9uc2VCcwoGY29tLnYxQgxKb3VybmFsUHJvdG9QAVozZ2l0aHViLmNvbS9oZW5yeWJyYXZvL21pY3JvLXJlcG9ydC9wcm90b3MvZ2VuL2dvL3YxogIDVlhYqgICVjHKAgJWMeICDlYxXEdQQk1ldGFkYXRh6gICVjFiBnByb3RvMw");
+  fileDesc("ChB2MS9qb3VybmFsLnByb3RvEgJ2MSL9AgoMSm91cm5hbEVudHJ5EgoKAmlkGAEgASgJEg4KBmNvZGlnbxgCIAEoCRIUCgxkZW5vbWluYWNpb24YAyABKAkSEgoKZW1wcmVzYV9pZBgEIAEoCRILCgNlZmUYBSABKAkSDAoEc212bhgGIAEoCRIMCgRzbXZlGAcgASgJEgwKBHRpcG8YCCABKAkSDwoHdGlwb19pZBgJIAEoCRILCgNlc2YYCiABKAgSCwoDZXJmGAsgASgIEgsKA2VybhgMIAEoCBIMCgRlZmxlGA0gASgIEgsKA2VjcBgOIAEoCBIRCgljaWVycmVfaWQYDyABKAkSEAoIc2VxdWVuY2UYECABKAUSEgoKY3JlYXRlZF9hdBgRIAEoCRISCgp1cGRhdGVkX2F0GBIgASgJEhIKCmRlbGV0ZWRfYXQYEyABKAkSDgoGaWlkZWJlGBQgASgCEg8KB2lpaGFiZXIYFSABKAISDAoEZGViZRgWIAEoAhINCgVoYWJlchgXIAEoAiLDAQoOR2VuZXJhbEpvdXJuYWwSCgoCaWQYASABKAkSCwoDY3VvGAIgASgJEhEKCW9wZXJhY2lvbhgDIAEoCRITCgtkZXNjcmlwY2lvbhgEIAEoCRIOCgZjdWVudGEYBSABKAkSFAoMZGVub21pbmFjaW9uGAYgASgJEgwKBGRlYmUYByABKAISDQoFaGFiZXIYCCABKAISDwoHc3VtYV8xOBgJIAEoAhIPCgdzdW1hXzE5GAogASgCEgsKA2NhchgLIAEoCSJECh1SZXRyaWV2ZUdlbmVyYWxKb3VybmFsUmVxdWVzdBITCgtidXNpbmVzc19pZBgBIAEoCRIOCgZwZXJpb2QYAiABKAkiTgoeUmV0cmlldmVHZW5lcmFsSm91cm5hbFJlc3BvbnNlEiwKEGdlbmVyYWxfam91cm5hbHMYASADKAsyEi52MS5HZW5lcmFsSm91cm5hbCKKAQocUmV0cmlldmVKb3VybmFsUmVwb3J0UmVxdWVzdBITCgtidXNpbmVzc19pZBgBIAEoCRIOCgZwZXJpb2QYAiABKAkSFwoPaXNfY29uc29saWRhdGVkGAMgASgIEhUKDWluY2x1ZGVfY2xvc2UYBCABKAgSFQoNaW5jbHVkZV9jdV9iYRgFIAEoCCJDCh1SZXRyaWV2ZUpvdXJuYWxSZXBvcnRSZXNwb25zZRIiCghqb3VybmFscxgBIAMoCzIQLnYxLkpvdXJuYWxFbnRyeTLPAQoOSm91cm5hbFNlcnZpY2USXAoVUmV0cmlldmVKb3VybmFsUmVwb3J0EiAudjEuUmV0cmlldmVKb3VybmFsUmVwb3J0UmVxdWVzdBohLnYxLlJldHJpZXZlSm91cm5hbFJlcG9ydFJlc3BvbnNlEl8KFlJldHJpZXZlR2VuZXJhbEpvdXJuYWwSIS52MS5SZXRyaWV2ZUdlbmVyYWxKb3VybmFsUmVxdWVzdBoiLnYxLlJldHJpZXZlR2VuZXJhbEpvdXJuYWxSZXNwb25zZUJzCgZjb20udjFCDEpvdXJuYWxQcm90b1ABWjNnaXRodWIuY29tL2hlbnJ5YnJhdm8vbWljcm8tcmVwb3J0L3Byb3Rvcy9nZW4vZ28vdjGiAgNWWFiqAgJWMcoCAlYx4gIOVjFcR1BCTWV0YWRhdGHqAgJWMWIGcHJvdG8z");
 
 /**
  * Describes the message v1.JournalEntry.
@@ -18,18 +18,39 @@ export const JournalEntrySchema = /*@__PURE__*/
   messageDesc(file_v1_journal, 0);
 
 /**
- * Describes the message v1.RetrieveJournalReportResponse.
- * Use `create(RetrieveJournalReportResponseSchema)` to create a new message.
+ * Describes the message v1.GeneralJournal.
+ * Use `create(GeneralJournalSchema)` to create a new message.
  */
-export const RetrieveJournalReportResponseSchema = /*@__PURE__*/
+export const GeneralJournalSchema = /*@__PURE__*/
   messageDesc(file_v1_journal, 1);
+
+/**
+ * Describes the message v1.RetrieveGeneralJournalRequest.
+ * Use `create(RetrieveGeneralJournalRequestSchema)` to create a new message.
+ */
+export const RetrieveGeneralJournalRequestSchema = /*@__PURE__*/
+  messageDesc(file_v1_journal, 2);
+
+/**
+ * Describes the message v1.RetrieveGeneralJournalResponse.
+ * Use `create(RetrieveGeneralJournalResponseSchema)` to create a new message.
+ */
+export const RetrieveGeneralJournalResponseSchema = /*@__PURE__*/
+  messageDesc(file_v1_journal, 3);
 
 /**
  * Describes the message v1.RetrieveJournalReportRequest.
  * Use `create(RetrieveJournalReportRequestSchema)` to create a new message.
  */
 export const RetrieveJournalReportRequestSchema = /*@__PURE__*/
-  messageDesc(file_v1_journal, 2);
+  messageDesc(file_v1_journal, 4);
+
+/**
+ * Describes the message v1.RetrieveJournalReportResponse.
+ * Use `create(RetrieveJournalReportResponseSchema)` to create a new message.
+ */
+export const RetrieveJournalReportResponseSchema = /*@__PURE__*/
+  messageDesc(file_v1_journal, 5);
 
 /**
  * @generated from service v1.JournalService
