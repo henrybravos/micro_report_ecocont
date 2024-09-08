@@ -137,20 +137,107 @@ export declare type JournalEntry = Message<"v1.JournalEntry"> & {
 export declare const JournalEntrySchema: GenMessage<JournalEntry>;
 
 /**
- * @generated from message v1.RetrieveJournalReportResponse
+ * @generated from message v1.GeneralJournal
  */
-export declare type RetrieveJournalReportResponse = Message<"v1.RetrieveJournalReportResponse"> & {
+export declare type GeneralJournal = Message<"v1.GeneralJournal"> & {
   /**
-   * @generated from field: repeated v1.JournalEntry journals = 1;
+   * @generated from field: string id = 1;
    */
-  journals: JournalEntry[];
+  id: string;
+
+  /**
+   * @generated from field: string cuo = 2;
+   */
+  cuo: string;
+
+  /**
+   * @generated from field: string operacion = 3;
+   */
+  operacion: string;
+
+  /**
+   * @generated from field: string descripcion = 4;
+   */
+  descripcion: string;
+
+  /**
+   * @generated from field: string cuenta = 5;
+   */
+  cuenta: string;
+
+  /**
+   * @generated from field: string denominacion = 6;
+   */
+  denominacion: string;
+
+  /**
+   * @generated from field: float debe = 7;
+   */
+  debe: number;
+
+  /**
+   * @generated from field: float haber = 8;
+   */
+  haber: number;
+
+  /**
+   * @generated from field: float suma_18 = 9;
+   */
+  suma18: number;
+
+  /**
+   * @generated from field: float suma_19 = 10;
+   */
+  suma19: number;
+
+  /**
+   * @generated from field: string car = 11;
+   */
+  car: string;
 };
 
 /**
- * Describes the message v1.RetrieveJournalReportResponse.
- * Use `create(RetrieveJournalReportResponseSchema)` to create a new message.
+ * Describes the message v1.GeneralJournal.
+ * Use `create(GeneralJournalSchema)` to create a new message.
  */
-export declare const RetrieveJournalReportResponseSchema: GenMessage<RetrieveJournalReportResponse>;
+export declare const GeneralJournalSchema: GenMessage<GeneralJournal>;
+
+/**
+ * @generated from message v1.RetrieveGeneralJournalRequest
+ */
+export declare type RetrieveGeneralJournalRequest = Message<"v1.RetrieveGeneralJournalRequest"> & {
+  /**
+   * @generated from field: string business_id = 1;
+   */
+  businessId: string;
+
+  /**
+   * @generated from field: string period = 2;
+   */
+  period: string;
+};
+
+/**
+ * Describes the message v1.RetrieveGeneralJournalRequest.
+ * Use `create(RetrieveGeneralJournalRequestSchema)` to create a new message.
+ */
+export declare const RetrieveGeneralJournalRequestSchema: GenMessage<RetrieveGeneralJournalRequest>;
+
+/**
+ * @generated from message v1.RetrieveGeneralJournalResponse
+ */
+export declare type RetrieveGeneralJournalResponse = Message<"v1.RetrieveGeneralJournalResponse"> & {
+  /**
+   * @generated from field: repeated v1.GeneralJournal general_journals = 1;
+   */
+  generalJournals: GeneralJournal[];
+};
+
+/**
+ * Describes the message v1.RetrieveGeneralJournalResponse.
+ * Use `create(RetrieveGeneralJournalResponseSchema)` to create a new message.
+ */
+export declare const RetrieveGeneralJournalResponseSchema: GenMessage<RetrieveGeneralJournalResponse>;
 
 /**
  * @generated from message v1.RetrieveJournalReportRequest
@@ -189,6 +276,22 @@ export declare type RetrieveJournalReportRequest = Message<"v1.RetrieveJournalRe
 export declare const RetrieveJournalReportRequestSchema: GenMessage<RetrieveJournalReportRequest>;
 
 /**
+ * @generated from message v1.RetrieveJournalReportResponse
+ */
+export declare type RetrieveJournalReportResponse = Message<"v1.RetrieveJournalReportResponse"> & {
+  /**
+   * @generated from field: repeated v1.JournalEntry journals = 1;
+   */
+  journals: JournalEntry[];
+};
+
+/**
+ * Describes the message v1.RetrieveJournalReportResponse.
+ * Use `create(RetrieveJournalReportResponseSchema)` to create a new message.
+ */
+export declare const RetrieveJournalReportResponseSchema: GenMessage<RetrieveJournalReportResponse>;
+
+/**
  * @generated from service v1.JournalService
  */
 export declare const JournalService: GenService<{
@@ -199,6 +302,14 @@ export declare const JournalService: GenService<{
     methodKind: "unary";
     input: typeof RetrieveJournalReportRequestSchema;
     output: typeof RetrieveJournalReportResponseSchema;
+  },
+  /**
+   * @generated from rpc v1.JournalService.RetrieveGeneralJournal
+   */
+  retrieveGeneralJournal: {
+    methodKind: "unary";
+    input: typeof RetrieveGeneralJournalRequestSchema;
+    output: typeof RetrieveGeneralJournalResponseSchema;
   },
 }>;
 

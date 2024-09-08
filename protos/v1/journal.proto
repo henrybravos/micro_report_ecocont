@@ -27,9 +27,29 @@ message JournalEntry {
   float debe = 22;
   float haber = 23;
 }
-message RetrieveJournalReportResponse {
-  repeated JournalEntry journals = 1;
+message GeneralJournal {
+  string id = 1;
+  string cuo = 2;
+  string operacion = 3;
+  string descripcion = 4;
+  string cuenta = 5;
+  string denominacion = 6;
+  float debe = 7;
+  float haber = 8;
+  float suma_18 = 9;
+  float suma_19 = 10;
+  string car = 11;
 }
+
+message RetrieveGeneralJournalRequest {
+  string business_id = 1;
+  string period = 2;
+}
+
+message RetrieveGeneralJournalResponse {
+  repeated GeneralJournal general_journals = 1;
+}
+
 message RetrieveJournalReportRequest {
   string business_id = 1;
   string period = 2;
@@ -37,6 +57,11 @@ message RetrieveJournalReportRequest {
   bool include_close = 4;
   bool include_cu_ba= 5;
 }
+message RetrieveJournalReportResponse {
+  repeated JournalEntry journals = 1;
+}
+
 service JournalService {
   rpc RetrieveJournalReport (RetrieveJournalReportRequest) returns (RetrieveJournalReportResponse);
+  rpc RetrieveGeneralJournal (RetrieveGeneralJournalRequest) returns (RetrieveGeneralJournalResponse);
 }

@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { RetrieveJournalReportRequest, RetrieveJournalReportResponse } from "./journal_pb.js";
+import { RetrieveGeneralJournalRequest, RetrieveGeneralJournalResponse, RetrieveJournalReportRequest, RetrieveJournalReportResponse } from "./journal_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -19,6 +19,15 @@ export const JournalService = {
       name: "RetrieveJournalReport",
       I: RetrieveJournalReportRequest,
       O: RetrieveJournalReportResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc v1.JournalService.RetrieveGeneralJournal
+     */
+    retrieveGeneralJournal: {
+      name: "RetrieveGeneralJournal",
+      I: RetrieveGeneralJournalRequest,
+      O: RetrieveGeneralJournalResponse,
       kind: MethodKind.Unary,
     },
   }

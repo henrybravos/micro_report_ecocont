@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { RetrieveJournalReportRequest, RetrieveJournalReportResponse } from "./journal_pb.js";
+import { RetrieveGeneralJournalRequest, RetrieveGeneralJournalResponse, RetrieveJournalReportRequest, RetrieveJournalReportResponse } from "./journal_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -19,6 +19,15 @@ export declare const JournalService: {
       readonly name: "RetrieveJournalReport",
       readonly I: typeof RetrieveJournalReportRequest,
       readonly O: typeof RetrieveJournalReportResponse,
+      readonly kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc v1.JournalService.RetrieveGeneralJournal
+     */
+    readonly retrieveGeneralJournal: {
+      readonly name: "RetrieveGeneralJournal",
+      readonly I: typeof RetrieveGeneralJournalRequest,
+      readonly O: typeof RetrieveGeneralJournalResponse,
       readonly kind: MethodKind.Unary,
     },
   }

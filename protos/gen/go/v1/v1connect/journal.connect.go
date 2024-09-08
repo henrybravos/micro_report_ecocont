@@ -36,17 +36,22 @@ const (
 	// JournalServiceRetrieveJournalReportProcedure is the fully-qualified name of the JournalService's
 	// RetrieveJournalReport RPC.
 	JournalServiceRetrieveJournalReportProcedure = "/v1.JournalService/RetrieveJournalReport"
+	// JournalServiceRetrieveGeneralJournalProcedure is the fully-qualified name of the JournalService's
+	// RetrieveGeneralJournal RPC.
+	JournalServiceRetrieveGeneralJournalProcedure = "/v1.JournalService/RetrieveGeneralJournal"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	journalServiceServiceDescriptor                     = v1.File_v1_journal_proto.Services().ByName("JournalService")
-	journalServiceRetrieveJournalReportMethodDescriptor = journalServiceServiceDescriptor.Methods().ByName("RetrieveJournalReport")
+	journalServiceServiceDescriptor                      = v1.File_v1_journal_proto.Services().ByName("JournalService")
+	journalServiceRetrieveJournalReportMethodDescriptor  = journalServiceServiceDescriptor.Methods().ByName("RetrieveJournalReport")
+	journalServiceRetrieveGeneralJournalMethodDescriptor = journalServiceServiceDescriptor.Methods().ByName("RetrieveGeneralJournal")
 )
 
 // JournalServiceClient is a client for the v1.JournalService service.
 type JournalServiceClient interface {
 	RetrieveJournalReport(context.Context, *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error)
+	RetrieveGeneralJournal(context.Context, *connect.Request[v1.RetrieveGeneralJournalRequest]) (*connect.Response[v1.RetrieveGeneralJournalResponse], error)
 }
 
 // NewJournalServiceClient constructs a client for the v1.JournalService service. By default, it
@@ -65,12 +70,19 @@ func NewJournalServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(journalServiceRetrieveJournalReportMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		retrieveGeneralJournal: connect.NewClient[v1.RetrieveGeneralJournalRequest, v1.RetrieveGeneralJournalResponse](
+			httpClient,
+			baseURL+JournalServiceRetrieveGeneralJournalProcedure,
+			connect.WithSchema(journalServiceRetrieveGeneralJournalMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // journalServiceClient implements JournalServiceClient.
 type journalServiceClient struct {
-	retrieveJournalReport *connect.Client[v1.RetrieveJournalReportRequest, v1.RetrieveJournalReportResponse]
+	retrieveJournalReport  *connect.Client[v1.RetrieveJournalReportRequest, v1.RetrieveJournalReportResponse]
+	retrieveGeneralJournal *connect.Client[v1.RetrieveGeneralJournalRequest, v1.RetrieveGeneralJournalResponse]
 }
 
 // RetrieveJournalReport calls v1.JournalService.RetrieveJournalReport.
@@ -78,9 +90,15 @@ func (c *journalServiceClient) RetrieveJournalReport(ctx context.Context, req *c
 	return c.retrieveJournalReport.CallUnary(ctx, req)
 }
 
+// RetrieveGeneralJournal calls v1.JournalService.RetrieveGeneralJournal.
+func (c *journalServiceClient) RetrieveGeneralJournal(ctx context.Context, req *connect.Request[v1.RetrieveGeneralJournalRequest]) (*connect.Response[v1.RetrieveGeneralJournalResponse], error) {
+	return c.retrieveGeneralJournal.CallUnary(ctx, req)
+}
+
 // JournalServiceHandler is an implementation of the v1.JournalService service.
 type JournalServiceHandler interface {
 	RetrieveJournalReport(context.Context, *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error)
+	RetrieveGeneralJournal(context.Context, *connect.Request[v1.RetrieveGeneralJournalRequest]) (*connect.Response[v1.RetrieveGeneralJournalResponse], error)
 }
 
 // NewJournalServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -95,10 +113,18 @@ func NewJournalServiceHandler(svc JournalServiceHandler, opts ...connect.Handler
 		connect.WithSchema(journalServiceRetrieveJournalReportMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	journalServiceRetrieveGeneralJournalHandler := connect.NewUnaryHandler(
+		JournalServiceRetrieveGeneralJournalProcedure,
+		svc.RetrieveGeneralJournal,
+		connect.WithSchema(journalServiceRetrieveGeneralJournalMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/v1.JournalService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case JournalServiceRetrieveJournalReportProcedure:
 			journalServiceRetrieveJournalReportHandler.ServeHTTP(w, r)
+		case JournalServiceRetrieveGeneralJournalProcedure:
+			journalServiceRetrieveGeneralJournalHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -110,4 +136,8 @@ type UnimplementedJournalServiceHandler struct{}
 
 func (UnimplementedJournalServiceHandler) RetrieveJournalReport(context.Context, *connect.Request[v1.RetrieveJournalReportRequest]) (*connect.Response[v1.RetrieveJournalReportResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.JournalService.RetrieveJournalReport is not implemented"))
+}
+
+func (UnimplementedJournalServiceHandler) RetrieveGeneralJournal(context.Context, *connect.Request[v1.RetrieveGeneralJournalRequest]) (*connect.Response[v1.RetrieveGeneralJournalResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.JournalService.RetrieveGeneralJournal is not implemented"))
 }
