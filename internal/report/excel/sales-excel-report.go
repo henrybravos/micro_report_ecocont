@@ -26,7 +26,6 @@ func (e *SalesGenerator) GenerateSalesReport(business *repositories.Business, pe
 		}
 	}()
 
-	// Renombra la hoja por defecto a "Reporte_de_ventas"
 	defaultSheetName := f.GetSheetName(0)
 	sheetName := "Reporte_de_ventas"
 	f.SetSheetName(defaultSheetName, sheetName)
@@ -35,11 +34,11 @@ func (e *SalesGenerator) GenerateSalesReport(business *repositories.Business, pe
 	lastRow := len(sales) + 7 // 7 es el número de filas de encabezado
 
 	columns := []ColumnSheetStyle{
-		{"A", 14}, {"B", 14}, {"C", 14}, {"D", 5}, {"E", 6},
-		{"F", 7}, {"G", 5}, {"H", 13}, {"I", 43}, {"J", 10},
+		{"A", 9}, {"B", 8}, {"C", 8}, {"D", 3}, {"E", 5},
+		{"F", 6}, {"G", 3}, {"H", 10}, {"I", 35}, {"J", 10},
 		{"K", 12}, {"L", 9}, {"M", 13}, {"N", 11}, {"O", 5},
 		{"P", 7}, {"Q", 6}, {"R", 7}, {"S", 8}, {"T", 11},
-		{"U", 6}, {"V", 10}, {"W", 6}, {"X", 7}, {"Y", 10},
+		{"U", 6}, {"V", 9}, {"W", 3}, {"X", 6}, {"Y", 10},
 	}
 
 	if err := setSheetStyles(f, columns, sheetName); err != nil {
@@ -223,10 +222,37 @@ func createTitleStyle(f *excelize.File) (int, error) {
 }
 
 func setSalesExcelSheetStyle(f *excelize.File, sheetName string, lastRow int) error {
-	//quitar cuadrícula a la hoja
 	showGridLines := false
+	showZeros := false
 	if err := f.SetSheetView(sheetName, 0, &excelize.ViewOptions{
 		ShowGridLines: &showGridLines,
+		ShowZeros:     &showZeros,
+	}); err != nil {
+		return err
+	}
+
+	orientation := "landscape"
+	scale := uint(65)
+	if err := f.SetPageLayout(sheetName, &excelize.PageLayoutOptions{
+		Orientation: &orientation,
+		AdjustTo: &scale,
+	}); err != nil {
+		return err
+	}
+
+	topMargin := 0.25
+	bottomMargin := 0.25
+	leftMargin := 0.2
+	rightMargin := 0.2
+	headerMargin := 0.2
+	footerMargin := 0.2
+	if err := f.SetPageMargins(sheetName, &excelize.PageLayoutMarginsOptions{
+		Top:    &topMargin,
+		Bottom: &bottomMargin,
+		Left:   &leftMargin,
+		Right:  &rightMargin,
+		Header: &headerMargin,
+		Footer: &footerMargin,
 	}); err != nil {
 		return err
 	}
@@ -240,28 +266,24 @@ func setSalesExcelSheetStyle(f *excelize.File, sheetName string, lastRow int) er
 
 func setSalesRowStyle(f *excelize.File, sheetName string, lastRow int) error {
 	exp := "#,##0.00_);(#,##0.00)"
-	// Define la configuración de la fuente
 	fontConfig := &excelize.Font{
 		Family: "Arial Narrow",
 		Size:   8,
 	}
-
 	numberStyle, _ := f.NewStyle(&excelize.Style{
 		CustomNumFmt: &exp,
 		Font:         fontConfig,
 	})
-
-	// Define el estilo de solo fuente
 	fontStyle, _ := f.NewStyle(&excelize.Style{
 		Font: fontConfig,
+		Alignment: &excelize.Alignment{
+            WrapText: true,
+        },
 	})
-
 	totalRowStyle, rightAlignStyle, err := setTotalRowStyle(f)
-
 	if err != nil {
 		return err
 	}
-
 	// Define un slice con las columnas que deben usar el numberStyle
 	numberStyleColumns := []string{"J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T"}
 
@@ -305,7 +327,7 @@ func setSalesRowStyle(f *excelize.File, sheetName string, lastRow int) error {
 		log.Printf("Error al establecer el estilo en la fila de totales: %s", err.Error())
 		return err
 	}
-
+	
 	return nil
 }
 
@@ -329,7 +351,6 @@ func setTotalRowStyle(f *excelize.File) (int, int, error) {
 		return 0, 0, err
 	}
 
-	// Define el estilo de alineación a la derecha
 	rightAlignStyle, err := f.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{
 			Horizontal: "right",
