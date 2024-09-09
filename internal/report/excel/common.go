@@ -64,6 +64,5 @@ func setSheetStyles(f *excelize.File, columns []ColumnSheetStyle, sheetName stri
 			return err
 		}
 	}
-
 	return nil
 }
