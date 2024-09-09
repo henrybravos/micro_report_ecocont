@@ -32,6 +32,7 @@ func main() {
 	businessRepo := repositories.NewBusinessRepository(dbConnection)
 	journalRepo := repositories.NewJournalRepository(dbConnection)
 	cashRepo := repositories.NewCashRepository(dbConnection)
+	bankBookRepo := repositories.NewBankBookRepository(dbConnection)
 
 	salesServer := &services.SalesServer{
 		SalesRepo:    salesRepo,
@@ -49,6 +50,12 @@ func main() {
 		CashRepo: cashRepo,
 	}
 	path, handler = v1connect.NewCashBookServiceHandler(cashServer)
+	mux.Handle(path, handler)
+
+	bankBookServer := &services.BookServer{
+		BookRepo: bankBookRepo,
+	}
+	path, handler = v1connect.NewBankBookServiceHandler(bankBookServer)
 	mux.Handle(path, handler)
 
 	mux.Handle("/tmp/", http.StripPrefix("/tmp/", http.FileServer(http.Dir("tmp"))))
