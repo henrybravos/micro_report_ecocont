@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package v1;
+
+message KardexValued {
+  string medida = 1;
+  string inventario = 2;
+  string existencia = 3;
+  string fecha_emision = 4;
+  string tipo = 5;
+  string serie = 6;
+  string numero = 7;
+  string tipo_opercion = 8;
+  float cantidad = 9;
+  float costo = 10;
+  string kardex = 11;
+  string libro = 12;
+  float equivalencia = 13;
+  string categoria = 14;
+  string producto_id = 15;
+  string codigo_barras = 16;
+  int32 tipo_cambio = 17;
+}
+
+message RetrieveKardexValuedRequest {
+  string local_id = 1;
+  string period = 2;
+  bool include_notes = 3;
+  string product_id = 4;
+  string start_date = 5;
+  string end_date = 6;
+}
+message RetrieveKardexValuedResponse {
+  repeated KardexValued data = 1;
+}
+service KardexService {
+  rpc RetrieveKardexValued(RetrieveKardexValuedRequest) returns (RetrieveKardexValuedResponse);
+}

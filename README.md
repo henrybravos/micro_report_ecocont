@@ -123,3 +123,20 @@ available for 5 minutes
 | `includeClose`         | `bool`     | include close report, DEFAULT: false                                       |
 
 **return:** proto []GeneralJournal
+
+### "Kardex Valorizado"
+    
+```http
+    POST /v1.KardexService/RetrieveKardexValued
+```
+
+| Parameter      | Type          | Description                                                                                                             |
+|:---------------|:--------------|:------------------------------------------------------------------------------------------------------------------------|
+| `localId`      | `string`      | **Required**. Local Company for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef                                        |
+| `includeNotes` | `bool`        | **Required**. internal Notes, Default FALSE,                                                                            |
+| `period`       | `string,null` | Retrieve per Period, eg: 2024-01                                                                                        |
+| `productId`    | `string,null` | Product for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef                                                            |
+| `startDate`    | `string,null` | Date to search data.  To retrieve data by period, period must be NULL                                                   |
+| `endDate`      | `string,null` | Date to search data.  To retrieve data by period, period must be NULL                                                   |
+
+**return:** proto []KardexValued
