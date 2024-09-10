@@ -58,6 +58,12 @@ func main() {
 	path, handler = v1connect.NewBankBookServiceHandler(bankBookServer)
 	mux.Handle(path, handler)
 
+	kardexServer := &services.KardexServer{
+		KardexRepo: repositories.NewKardexRepository(dbConnection),
+	}
+	path, handler = v1connect.NewKardexServiceHandler(kardexServer)
+	mux.Handle(path, handler)
+
 	mux.Handle("/tmp/", http.StripPrefix("/tmp/", http.FileServer(http.Dir("tmp"))))
 	err = http.ListenAndServe(
 		":8080",
