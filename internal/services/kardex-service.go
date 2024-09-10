@@ -21,15 +21,27 @@ func (k *KardexServer) RetrieveKardexValued(
 	log.Println("Request headers: ", req.Header())
 	localID := req.Msg.GetLocalId()
 	isNotes := req.Msg.GetIncludeNotes()
+	productID := req.Msg.GetProductId()
+	startDate := req.Msg.GetStartDate()
+	endDate := req.Msg.GetEndDate()
 	period := req.Msg.GetPeriod()
+	perPeriod := true
 	if !validate.IsValidUUID(localID) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid business ID"))
 	}
 	if !validate.IsValidPeriod(period) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid period"))
+		perPeriod = false
+		if !validate.IsValidDate(startDate) || !validate.IsValidDate(endDate) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid date, need period or dates to retrieve kardex"))
+		}
+	} else {
+		startDate = period
+		endDate = period
 	}
-
-	kardex, err := k.KardexRepo.GetReportKardex(localID, period, period, "", isNotes, true)
+	if !validate.IsValidUUID(productID) {
+		productID = ""
+	}
+	kardex, err := k.KardexRepo.GetReportKardex(localID, startDate, endDate, productID, isNotes, perPeriod)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
