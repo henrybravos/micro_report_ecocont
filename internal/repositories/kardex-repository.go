@@ -59,9 +59,9 @@ func (k *KardexRepository) GetReportKardex(localID, startDate, endDate, productI
 		tm.codigo as tipo_operacion, 
 		m.cantidad as cantidad,
 		m.costo_unitario as costo, --9
-		COALESCE(o.tipo_operacion_kardex, '') as kardex, 
+		o.tipo_operacion_kardex as kardex, 
 		o.codigo_libro as libro, 
-		COALESCE(m.equivalencia, 0) as equivalencia, 
+		m.equivalencia as equivalencia, 
 		cat.nombre as categoria, 
 		p.id as producto_id, 
 		COALESCE(p.codigo_barras, '') as codigo_barras, 
