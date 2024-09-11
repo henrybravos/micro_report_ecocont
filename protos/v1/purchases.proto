@@ -48,7 +48,7 @@ message PurchaseReport {
   string c_icbper = 44;
   string c_estado = 45;
 }
-message  RetrievePurchaseReportRequest {
+message RetrievePurchaseReportRequest {
   string business_id = 1;
   string period = 2;
 }

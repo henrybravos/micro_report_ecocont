@@ -3,7 +3,7 @@ syntax = "proto3";
 package v1;
 message BankBalance {
   string id = 1;
-  float amount  = 2;
+  float amount = 2;
 }
 
 message LBank {
@@ -44,5 +44,5 @@ message RetrieveBankBookRequest {
   repeated string account_ids = 3;
 }
 service BankBookService {
-  rpc RetrieveBankBook (RetrieveBankBookRequest) returns (RetrieveBankBookResponse);
+  rpc RetrieveBankBook(RetrieveBankBookRequest) returns (RetrieveBankBookResponse);
 }
