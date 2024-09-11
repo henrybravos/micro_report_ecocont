@@ -3,9 +3,10 @@ package repositories
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/henrybravo/micro-report/pkg/db"
 	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
-	"strings"
 )
 
 type KardexRepository struct {

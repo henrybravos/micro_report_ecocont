@@ -2,17 +2,19 @@ package pdf
 
 import (
 	"fmt"
-	"github.com/henrybravo/micro-report/pkg/utils"
 	"log"
 	"math"
 	"strconv"
 	"time"
 
+	"github.com/henrybravo/micro-report/pkg/utils"
+
+	"strings"
+
 	"github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/pkg/files"
 	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
 	"github.com/signintech/gopdf"
-	"strings"
 )
 
 type SalesGenerator struct{}

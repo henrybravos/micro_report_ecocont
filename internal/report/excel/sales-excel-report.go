@@ -2,10 +2,11 @@ package excel
 
 import (
 	"fmt"
-	"github.com/henrybravo/micro-report/pkg/utils"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/henrybravo/micro-report/pkg/utils"
 
 	"github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/pkg/files"

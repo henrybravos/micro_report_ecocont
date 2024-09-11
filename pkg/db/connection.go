@@ -3,9 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"os"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Connection struct {

@@ -1,6 +1,11 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"runtime"
+
 	"github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/internal/services"
 	"github.com/henrybravo/micro-report/pkg/db"
@@ -8,10 +13,6 @@ import (
 	"github.com/joho/godotenv"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"log"
-	"net/http"
-	_ "net/http/pprof"
-	"runtime"
 )
 
 func main() {

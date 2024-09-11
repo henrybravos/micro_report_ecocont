@@ -1,0 +1,26 @@
+run:
+  timeout: 5m
+  tests: false
+
+linters:
+  disable-all: true
+  enable:
+    - govet       # Linter básico de Go
+    - ineffassign # Detecta asignaciones innecesarias
+    - gofmt       # Formatea el código según las reglas de Go
+    - goimports   # Importaciones automáticas
+    - errcheck    # Verifica errores no manejados
+    - staticcheck # Conjunto de análisis estático más avanzado
+    - unused      # Detecta código no utilizado
+
+# Configuración de las reglas de gofmt y goimports
+linters-settings:
+  gofmt:
+    simplify: true # Intenta simplificar el código al máximo
+  goimports:
+    local-prefixes: github.com/tu-proyecto # Define tu prefijo local para ordenar importaciones
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0

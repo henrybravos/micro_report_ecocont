@@ -1,17 +1,18 @@
 package services
 
 import (
-	"connectrpc.com/connect"
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"strconv"
+	"strings"
+
+	"connectrpc.com/connect"
 	repo "github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/pkg/utils"
 	"github.com/henrybravo/micro-report/pkg/validate"
 	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
-	"log"
-	"strconv"
-	"strings"
 )
 
 type JournalServer struct {

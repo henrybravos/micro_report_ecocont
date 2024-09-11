@@ -1,13 +1,14 @@
 package services
 
 import (
-	"connectrpc.com/connect"
 	"context"
 	"errors"
+	"strings"
+
+	"connectrpc.com/connect"
 	repo "github.com/henrybravo/micro-report/internal/repositories"
 	"github.com/henrybravo/micro-report/pkg/validate"
 	v1 "github.com/henrybravo/micro-report/protos/gen/go/v1"
-	"strings"
 )
 
 type BookServer struct {
