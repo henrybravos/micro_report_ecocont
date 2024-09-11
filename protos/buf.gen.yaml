@@ -1,24 +1,19 @@
-version: v1
+version: v2
 managed:
   enabled: true
-  go_package_prefix:
-    default: github.com/henrybravo/micro-report/protos/gen/go
+  override:
+    - file_option: go_package_prefix
+      value: github.com/henrybravo/micro-report/protos/gen/go
 plugins:
-  # server
-  - plugin: buf.build/protocolbuffers/go
+  - remote: buf.build/protocolbuffers/go
     out: gen/go
-    opt:
-      - paths=source_relative
-  - plugin: buf.build/connectrpc/go
+    opt: paths=source_relative
+  - remote: buf.build/connectrpc/go
     out: gen/go
-    opt:
-      - paths=source_relative
-  # client
-  - plugin: buf.build/bufbuild/es
+    opt: paths=source_relative
+  - remote: buf.build/bufbuild/es
     out: gen/js
-    opt:
-      - target=js+dts
-  - plugin: buf.build/bufbuild/connect-web
+    opt: target=js+dts
+  - remote: buf.build/bufbuild/connect-web
     out: gen/js
-    opt:
-      - target=js+dts
+    opt: target=js+dts
