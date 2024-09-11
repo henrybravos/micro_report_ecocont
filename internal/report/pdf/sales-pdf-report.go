@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"fmt"
+	"github.com/henrybravo/micro-report/pkg/utils"
 	"log"
 	"math"
 	"strconv"
@@ -83,9 +84,9 @@ func (p *SalesGenerator) initializeLayout() layout {
 		cuoW:         1.4,
 
 		cpeInfoW:   4.1,
-		cpeFecEmiW: 4.1 / 4 + 0.15,
-		cpeFecVenW: 4.1 / 4 + 0.15,
-		cpeTipoW:   4.1 / 6 - 0.3,
+		cpeFecEmiW: 4.1/4 + 0.15,
+		cpeFecVenW: 4.1/4 + 0.15,
+		cpeTipoW:   4.1/6 - 0.3,
 		cpeSerieW:  4.1 / 6,
 		cpeNumW:    4.1 / 6,
 
@@ -114,8 +115,8 @@ func (p *SalesGenerator) initializeLayout() layout {
 		tcW:       0.9,
 
 		refComW:   3.3,
-		refComFec: 3.3 / 4 + 0.2,
-		refComTip: 3.3 / 4 - 0.2,
+		refComFec: 3.3/4 + 0.2,
+		refComTip: 3.3/4 - 0.2,
 		refComSer: 3.3 / 4,
 		refComNum: 3.3 / 4,
 	}
@@ -126,12 +127,11 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 	pdf.SetCompressLevel(9) //compress content streams
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4Landscape, Unit: gopdf.UnitCM})
 	err = pdf.AddTTFFont("arial", "./fonts/ARIAL.TTF")
+	utils.CheckErr(err)
 	err = pdf.AddTTFFont("arialB", "./fonts/ARIALBD.TTF")
-	if err != nil {
-		log.Print(err.Error())
-		return
-	}
+	utils.CheckErr(err)
 	err = generatePage(business, period, &pdf, layout)
+	utils.CheckErr(err)
 	var (
 		sumMtoValFactExpo float32
 		sumBase           float32
@@ -159,7 +159,7 @@ func (p *SalesGenerator) GenerateSalesReport(business *repositories.Business, sa
 		numCells := determineNumCells(layout, &pdf, sale)
 		locationY := pdf.GetY() + layout.rowTableH
 		if numCells > 1 {
-			locationY = pdf.GetY() + layout.rowTableH + float64(numCells - 1) * layout.textH
+			locationY = pdf.GetY() + layout.rowTableH + float64(numCells-1)*layout.textH
 		}
 		if bandComings {
 			//for comming true and for going false
@@ -228,20 +228,23 @@ func determineNumCells(layout layout, pdf *gopdf.GoPdf, sale *v1.SalesReport) in
 	return maxRows
 }
 func calculateRows(length float64, pdf *gopdf.GoPdf, text string) int {
-	cellMaxCharacters,_ := pdf.MeasureTextWidth(text)
-	return int(math.Ceil(cellMaxCharacters/ length))
+	cellMaxCharacters, _ := pdf.MeasureTextWidth(text)
+	return int(math.Ceil(cellMaxCharacters / length))
 }
 func generatePage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) error {
 	pdf.AddPage()
 	pdf.SetXY(0, layout.marginY)
 	err := generateHeaderPage(business, period, pdf, layout)
+	utils.CheckErr(err)
 	pdf.SetXY(layout.marginX, layout.headerPageH)
 	err = generateHeaderTable(pdf, layout)
+	utils.CheckErr(err)
 	pdf.SetXY(layout.marginX, layout.headerPageH+layout.headerTableH)
 	return err
 }
 func generateHeaderPage(business *repositories.Business, period string, pdf *gopdf.GoPdf, layout layout) (err error) {
 	err = pdf.SetFont("arialB", "", 10)
+	utils.CheckErr(err)
 	rect := &gopdf.Rect{
 		H: 0.5,
 		W: layout.pageW,
@@ -250,16 +253,21 @@ func generateHeaderPage(business *repositories.Business, period string, pdf *gop
 		Align: gopdf.Middle | gopdf.Center,
 	}
 	err = pdf.CellWithOption(rect, business.BusinessName, cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(0, 0.7)
 	err = pdf.CellWithOption(rect, "R.U.C.: "+business.RUC, cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(0, 1.1)
 	err = pdf.CellWithOption(rect, business.Address, cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(0, 1.5)
 	err = pdf.CellWithOption(rect, "REGISTRO DE VENTAS DEL MES DE "+period, cellOptionCenter)
+	utils.CheckErr(err)
 	return
 }
 func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 	err := pdf.SetFont("arial", "", 5.5)
+	utils.CheckErr(err)
 	cellOptionAllBorderCenter := gopdf.CellOption{
 		Border: gopdf.AllBorders,
 		Align:  gopdf.Middle | gopdf.Center,
@@ -285,205 +293,256 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 		W: layout.cuoW,
 	}
 	err = pdf.CellWithOption(rect, "CUO", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 2,
 		W: layout.cpeInfoW,
 	}
 	err = pdf.CellWithOption(rect, "DATOS DE CP", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(layout.cuoW+layout.marginX, (layout.headerTableH/2)+layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.cpeFecEmiW,
 	}
 	err = pdf.CellWithOption(rect, "FECHA DE", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.cpeFecEmiW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "EMISIÓN", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX(), pdf.GetY()-layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.cpeFecVenW,
 	}
 	err = pdf.CellWithOption(rect, "FECHA DE", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.cpeFecVenW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "VENCIMIENTO", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX(), pdf.GetY()-layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 2,
 		W: layout.cpeTipoW,
 	}
 	err = pdf.CellWithOption(rect, "TIPO", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 2,
 		W: layout.cpeSerieW,
 	}
 	err = pdf.CellWithOption(rect, "SERIE", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 2,
 		W: layout.cpeNumW,
 	}
 	err = pdf.CellWithOption(rect, "NÚMERO", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(layout.cuoW+layout.cpeInfoW+layout.marginX, layout.headerPageH)
 	err = pdf.CellWithOption(&gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.clienteInfoW,
 	}, "INFORMACIÓN DEL CLIENTE", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.clienteInfoW, layout.headerPageH+layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.clienteInfoW / 3,
 	}
 	err = pdf.CellWithOption(rect, "DOCUMENTO DE", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.clienteInfoW/3, layout.headerPageH+layout.headerTableH/2)
 	err = pdf.CellWithOption(rect, "IDENTIDAD", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.clienteInfoW/3, layout.headerPageH+3*layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.clienteInfoW / 8,
 	}
 	err = pdf.CellWithOption(rect, "TIPO", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.clienteInfoW / 4.8,
 	}
 	err = pdf.CellWithOption(rect, "NÚMERO", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX(), layout.headerPageH+layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: 3 * layout.headerTableH / 4,
 		W: 2 * layout.clienteInfoW / 3,
 	}
 	err = pdf.CellWithOption(rect, "APELLIDOS Y NOMBRES O RAZÓN SOCIAL", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.valFacOExpW,
 	}
 	err = pdf.CellWithOption(rect, "VALOR", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.valFacOExpW, layout.headerPageH+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "FACTURADO O", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.valFacOExpW, layout.headerPageH+layout.headerTableH/2)
 	err = pdf.CellWithOption(rect, "DE", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.valFacOExpW, layout.headerPageH+3*layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "EXPORTACIÓN", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.baseImpW,
 	}
 	err = pdf.CellWithOption(rect, "BASE IMPONIBLE", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.baseImpW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "DE LA", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.baseImpW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "OPERACIÓN", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.baseImpW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "GRAVADA", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH,
 		W: layout.igvW,
 	}
 	err = pdf.CellWithOption(rect, "IGV Y/O IPM", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.totalExoInaW,
 	}
 	err = pdf.CellWithOption(rect, "VALOR TOTAL DE LA", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.totalExoInaW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "OPERACIÓN EXONERADA", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.totalExoInaW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "O INAFECTA", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.totalExoInaW, pdf.GetY()+layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.totalExoInaW / 2,
 	}
 	err = pdf.CellWithOption(rect, "EXONERADA", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	err = pdf.CellWithOption(rect, "INAFECTA", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH,
 		W: layout.iscW,
 	}
 	err = pdf.CellWithOption(rect, "ISC", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.opGravIvapW,
 	}
 	err = pdf.CellWithOption(rect, "OPERACIÓN GRAVADA", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.opGravIvapW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "CON EL IVAP", cellOptionCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.opGravIvapW, pdf.GetY()+layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.opGravIvapW / 2,
 	}
 	err = pdf.CellWithOption(rect, "BASE", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-(layout.opGravIvapW/2), pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "IMPONIBLE", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH + layout.headerTableH/2)
 	err = pdf.CellWithOption(&gopdf.Rect{
 		H: layout.headerTableH / 2,
 		W: layout.opGravIvapW / 2,
 	}, "IVAP", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	err = pdf.CellWithOption(&gopdf.Rect{
 		H: layout.headerTableH,
 		W: layout.icbW,
 	}, "ICB PER", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.otrosW,
 	}
 	err = pdf.CellWithOption(rect, "OTROS", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.otrosW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "TRIBUTOS", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.otrosW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "Y", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.otrosW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "CARGOS", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 2,
 		W: layout.impTotalW,
 	}
 	err = pdf.CellWithOption(rect, "IMPORTE", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.impTotalW, pdf.GetY()+layout.headerTableH/2)
 	err = pdf.CellWithOption(rect, "TOTAL", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 3,
 		W: layout.tcW,
 	}
 	err = pdf.CellWithOption(rect, "TIPO", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.tcW, pdf.GetY()+layout.headerTableH/3)
 	err = pdf.CellWithOption(rect, "DE", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.tcW, pdf.GetY()+layout.headerTableH/3)
 	err = pdf.CellWithOption(rect, "CAMBIO", cellOptionBorderRBCenter)
+	utils.CheckErr(err)
 	pdf.SetY(layout.headerPageH)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.refComW,
 	}
 	err = pdf.CellWithOption(rect, "REFERENCIA DEL COMPROBANTE", cellOptionBorderRTCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.refComW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "DE PAGO O DOCUMENTO ORIGINAL", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.refComW, pdf.GetY()+layout.headerTableH/4)
 	err = pdf.CellWithOption(rect, "QUE SE MODIFICA", cellOptionBorderRCenter)
+	utils.CheckErr(err)
 	pdf.SetXY(pdf.GetX()-layout.refComW, pdf.GetY()+layout.headerTableH/4)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.refComFec,
 	}
 	err = pdf.CellWithOption(rect, "FECHA", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.refComTip,
 	}
 	err = pdf.CellWithOption(rect, "TIPO", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.refComSer,
 	}
 	err = pdf.CellWithOption(rect, "SERIE", cellOptionAllBorderCenter)
+	utils.CheckErr(err)
 	rect = &gopdf.Rect{
 		H: layout.headerTableH / 4,
 		W: layout.refComNum,
@@ -493,9 +552,10 @@ func generateHeaderTable(pdf *gopdf.GoPdf, layout layout) error {
 }
 func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64, layout layout, numCells int) error {
 	err := pdf.SetFont("arial", "", 7)
+	utils.CheckErr(err)
 	rowMiddle := locationY + layout.textH
 	if numCells > 1 {
-		rowMiddle = locationY + (layout.rowTableH + layout.textH*float64(numCells-1) - layout.textH - layout.textH*float64(numCells-1))/2
+		rowMiddle = locationY + (layout.rowTableH+layout.textH*float64(numCells-1)-layout.textH-layout.textH*float64(numCells-1))/2
 	}
 	rowW := layout.pageW - layout.marginX*2
 	marginText := 0.1
@@ -511,24 +571,28 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 		W: rowW,
 	}
 	err = pdf.CellWithOption(rect, "", cellOptionBottom)
+	utils.CheckErr(err)
 	pdf.SetXY(currentWriteW, rowMiddle)
 	numRowsCuo := calculateRows(layout.cuoW, pdf, sale.Cuo)
-	if numRowsCuo > 1{
-		pdf.SetXY(currentWriteW, rowMiddle - (layout.textH * float64(numRowsCuo-1) + marginText*float64(numRowsCuo-1)))
+	if numRowsCuo > 1 {
+		pdf.SetXY(currentWriteW, rowMiddle-(layout.textH*float64(numRowsCuo-1)+marginText*float64(numRowsCuo-1)))
 		rect := &gopdf.Rect{
 			H: layout.rowTableH * float64(numCells),
 			W: layout.cuoW,
 		}
 		err = pdf.MultiCell(rect, sale.Cuo)
-	}else{
+	} else {
 		err = pdf.Text(sale.Cuo)
 	}
+	utils.CheckErr(err)
 	currentWriteW += layout.cuoW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.FecEmision)
+	utils.CheckErr(err)
 	currentWriteW += layout.cpeFecEmiW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.FechaVencimiento)
+	utils.CheckErr(err)
 	currentWriteW += layout.cpeFecVenW
 	alignCenter(pdf, sale.CodigoTipoCdp, layout.cpeTipoW, currentWriteW, rowMiddle, marginText)
 	currentWriteW += layout.cpeTipoW
@@ -540,18 +604,21 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	currentWriteW += layout.cliDocTipoW
 	pdf.SetXY(currentWriteW, rowMiddle)
 	err = pdf.Text(sale.NumDocIdentidadClient)
+	utils.CheckErr(err)
 	currentWriteW += layout.cliDocNumW
 	numRowsRazonSocial := calculateRows(layout.cliApeNomW, pdf, sale.RazonSocial)
 	if numRowsRazonSocial > 1 {
-		pdf.SetXY(currentWriteW, rowMiddle - (layout.textH * float64(numRowsRazonSocial-1) + marginText*float64(numRowsRazonSocial-1)))
+		pdf.SetXY(currentWriteW, rowMiddle-(layout.textH*float64(numRowsRazonSocial-1)+marginText*float64(numRowsRazonSocial-1)))
 		rect := &gopdf.Rect{
 			H: layout.rowTableH * float64(numCells),
 			W: layout.cliApeNomW,
 		}
 		err = pdf.MultiCell(rect, sale.RazonSocial)
+		utils.CheckErr(err)
 	} else {
 		pdf.SetXY(currentWriteW, rowMiddle)
 		err = pdf.Text(sale.RazonSocial)
+		utils.CheckErr(err)
 	}
 	currentWriteW += layout.cliApeNomW
 	alignRight(pdf, sale.MtoValFactExpo, layout.valFacOExpW, currentWriteW, rowMiddle, marginText)
@@ -582,6 +649,7 @@ func generateRowTable(pdf *gopdf.GoPdf, sale *v1.SalesReport, locationY float64,
 	} else {
 		err = pdf.Text(fmt.Sprintf("%.2f", sale.TipoCambio))
 	}
+	utils.CheckErr(err)
 	currentWriteW += layout.tcW
 	alignCenter(pdf, sale.FecEmisionMod, layout.refComFec, currentWriteW, rowMiddle, marginText)
 	currentWriteW += layout.refComFec
@@ -812,31 +880,34 @@ func addTotal(pdf *gopdf.GoPdf, locationY float64, layout layout, sumMtoValFactE
 	return err
 }
 func formatWithCommasAndDecimals(value float64) string {
-    parts := strings.Split(fmt.Sprintf("%.2f", value), ".")
-    integerPart := parts[0]
-    decimalPart := parts[1]
+	parts := strings.Split(fmt.Sprintf("%.2f", value), ".")
+	integerPart := parts[0]
+	decimalPart := parts[1]
 
-    var result strings.Builder
-    n := len(integerPart)
-    for i, digit := range integerPart {
-        if i > 0 && (n-i)%3 == 0 {
-            result.WriteRune(',')
-        }
-        result.WriteRune(digit)
-    }
-    return result.String() + "." + decimalPart
+	var result strings.Builder
+	n := len(integerPart)
+	for i, digit := range integerPart {
+		if i > 0 && (n-i)%3 == 0 {
+			result.WriteRune(',')
+		}
+		result.WriteRune(digit)
+	}
+	return result.String() + "." + decimalPart
 }
 func alignCenter(pdf *gopdf.GoPdf, value string, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
 	textWidth, _ := pdf.MeasureTextWidth(value)
-	pdf.SetXY(currentWriteW+(width-textWidth)/2 - marginText, rowMiddle)
-	pdf.Text(value)
+	pdf.SetXY(currentWriteW+(width-textWidth)/2-marginText, rowMiddle)
+	err := pdf.Text(value)
+	utils.CheckErr(err)
 }
 func alignRight(pdf *gopdf.GoPdf, value float32, width float64, currentWriteW float64, rowMiddle float64, marginText float64) {
-    if value == 0 {
-        return
-    }
-    text := formatWithCommasAndDecimals(float64(value))
-    textWidth, _ := pdf.MeasureTextWidth(text)
-    pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
-    pdf.Text(text)
+	if value == 0 {
+		return
+	}
+	text := formatWithCommasAndDecimals(float64(value))
+	textWidth, _ := pdf.MeasureTextWidth(text)
+	pdf.SetXY(currentWriteW+width-textWidth-marginText, rowMiddle)
+	err := pdf.Text(text)
+	utils.CheckErr(err)
+
 }

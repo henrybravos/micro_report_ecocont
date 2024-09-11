@@ -69,10 +69,6 @@ func (s *JournalServer) RetrieveGeneralJournal(_ context.Context, req *connect.R
 
 	for _, element := range journalEntries {
 		cuo := element["i2"]
-		observaciones := element["observaciones"]
-		if observaciones == "" || observaciones == "null" {
-			observaciones = ""
-		}
 		newCuo := strings.TrimSuffix(cuo.(string), "-")
 		cuoParts := strings.Split(cuo.(string), "-")
 		cuoSuffix := ""

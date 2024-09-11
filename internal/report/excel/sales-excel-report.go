@@ -2,6 +2,7 @@ package excel
 
 import (
 	"fmt"
+	"github.com/henrybravo/micro-report/pkg/utils"
 	"log"
 	"sync"
 	"time"
@@ -28,7 +29,8 @@ func (e *SalesGenerator) GenerateSalesReport(business *repositories.Business, pe
 
 	defaultSheetName := f.GetSheetName(0)
 	sheetName := "Reporte_de_ventas"
-	f.SetSheetName(defaultSheetName, sheetName)
+	err = f.SetSheetName(defaultSheetName, sheetName)
+	utils.CheckErr(err)
 
 	f.SetActiveSheet(0)
 	lastRow := len(sales) + 7 // 7 es el número de filas de encabezado
@@ -235,7 +237,7 @@ func setSalesExcelSheetStyle(f *excelize.File, sheetName string, lastRow int) er
 	scale := uint(65)
 	if err := f.SetPageLayout(sheetName, &excelize.PageLayoutOptions{
 		Orientation: &orientation,
-		AdjustTo: &scale,
+		AdjustTo:    &scale,
 	}); err != nil {
 		return err
 	}
@@ -277,8 +279,8 @@ func setSalesRowStyle(f *excelize.File, sheetName string, lastRow int) error {
 	fontStyle, _ := f.NewStyle(&excelize.Style{
 		Font: fontConfig,
 		Alignment: &excelize.Alignment{
-            WrapText: true,
-        },
+			WrapText: true,
+		},
 	})
 	totalRowStyle, rightAlignStyle, err := setTotalRowStyle(f)
 	if err != nil {
@@ -327,7 +329,7 @@ func setSalesRowStyle(f *excelize.File, sheetName string, lastRow int) error {
 		log.Printf("Error al establecer el estilo en la fila de totales: %s", err.Error())
 		return err
 	}
-	
+
 	return nil
 }
 
