@@ -55,13 +55,13 @@ message RetrieveJournalReportRequest {
   string period = 2;
   bool is_consolidated = 3;
   bool include_close = 4;
-  bool include_cu_ba= 5;
+  bool include_cu_ba = 5;
 }
 message RetrieveJournalReportResponse {
   repeated JournalEntry journals = 1;
 }
 
 service JournalService {
-  rpc RetrieveJournalReport (RetrieveJournalReportRequest) returns (RetrieveJournalReportResponse);
-  rpc RetrieveGeneralJournal (RetrieveGeneralJournalRequest) returns (RetrieveGeneralJournalResponse);
+  rpc RetrieveJournalReport(RetrieveJournalReportRequest) returns (RetrieveJournalReportResponse);
+  rpc RetrieveGeneralJournal(RetrieveGeneralJournalRequest) returns (RetrieveGeneralJournalResponse);
 }

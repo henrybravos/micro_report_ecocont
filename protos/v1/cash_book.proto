@@ -3,7 +3,7 @@ syntax = "proto3";
 package v1;
 message AccountBalance {
   string account_id = 1;
-  float amount  = 2;
+  float amount = 2;
 }
 message LCash {
   string c_id = 1;
@@ -32,7 +32,7 @@ message LCash {
   string o_observaciones = 24;
   float o_tipo_cambio = 25;
   string o_codigo_libro = 26;
-  string o_periodo  = 27;
+  string o_periodo = 27;
   float pg_tipo_cambio = 28;
   string pg_fecha_o_fecha_emision = 29;
 }
@@ -46,5 +46,5 @@ message RetrieveCashBookRequest {
   repeated string account_ids = 3;
 }
 service CashBookService {
-  rpc RetrieveCashBook (RetrieveCashBookRequest) returns (RetrieveCashBookResponse);
+  rpc RetrieveCashBook(RetrieveCashBookRequest) returns (RetrieveCashBookResponse);
 }
