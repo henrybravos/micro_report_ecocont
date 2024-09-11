@@ -140,3 +140,16 @@ available for 5 minutes
 | `endDate`      | `string,null` | Date to search data.  To retrieve data between dates, period must be NULL         |
 
 **return:** proto []KardexValued
+
+### "Registro de compras"
+
+```http
+    POST /v1.PurchaseService/RetrievePurchaseReport
+```
+
+| Parameter    | Type         | Description                                                                |
+|:-------------|:-------------|:---------------------------------------------------------------------------|
+| `businessId` | `string`     | **Required**. Company for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef |
+| `period`     | `string`     | **Required**. Retrieve per Period, eg: 2024-01                             |
+
+**return:** proto []PurchaseReport

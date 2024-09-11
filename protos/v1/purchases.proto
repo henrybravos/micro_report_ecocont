@@ -1,0 +1,60 @@
+syntax = "proto3";
+package v1;
+
+message PurchaseReport {
+  string o_id = 1;
+  string o_periodo = 2;
+  string o_cuo = 3;
+  string c_identificador_linea = 4;
+  string o_fecha_emision = 5;
+  string o_fecha_vencimiento = 6;
+  string tco_codigo = 7;
+  string o_serie = 8;
+  string c_dua = 9;
+  string o_correlativo = 10;
+  string c_numero_final = 11;
+  string td_codigo = 12;
+  string p_numero = 13;
+  string p_razon_social = 14;
+  string c_base_1 = 15;
+  string c_igv_1 = 16;
+  string c_base_2 = 17;
+  string c_igv_2 = 18;
+  string c_base_3 = 19;
+  string c_igv_3 = 20;
+  string c_no_gravada = 21;
+  string c_isc = 22;
+  string c_otros = 23;
+  string c_total = 24;
+  string tm_codigo = 25;
+  string o_tipo_cambio = 26;
+  string c_fecha_cdpm = 27;
+  string tico_codigo = 28;
+  string c_serie_cdpm = 29;
+  string c_dua_cdpm = 30;
+  string c_correlativo_cdpm = 31;
+  string c_fecha_detraccion = 32;
+  string c_numero_detraccion = 33;
+  string c_marca_cdp_retencion = 34;
+  string bbss_codigo = 35;
+  string c_contrato = 36;
+  string c_error_1 = 37;
+  string c_error_2 = 38;
+  string c_error_3 = 39;
+  string c_error_4 = 40;
+  string c_medio_pago = 41;
+  string o_importe_cdp_regimen_sunat = 42;
+  string o_tipo_cdp_regimen_sunat = 43;
+  string c_icbper = 44;
+  string c_estado = 45;
+}
+message  RetrievePurchaseReportRequest {
+  string business_id = 1;
+  string period = 2;
+}
+message RetrievePurchaseReportResponse {
+  repeated PurchaseReport data = 1;
+}
+service PurchaseService {
+  rpc RetrievePurchaseReport(RetrievePurchaseReportRequest) returns (RetrievePurchaseReportResponse);
+}
