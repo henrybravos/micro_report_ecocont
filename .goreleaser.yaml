@@ -1,0 +1,22 @@
+archives:
+  - format: gz
+    files:
+      - none*
+    rlcp: true
+before:
+  hooks:
+    - go mod download
+    - go mod verify
+builds:
+  - main: ./cmd/server/main.go
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -buildvcs=false
+    ldflags:
+      - -s -w -buildid=
+      - -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.CommitDate}} -X main.builtBy=goreleaser
+    mod_timestamp: '{{.CommitTimestamp}}'
+    targets:
+      - linux_amd64_v1
