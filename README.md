@@ -153,3 +153,19 @@ available for 5 minutes
 | `period`     | `string`     | **Required**. Retrieve per Period, eg: 2024-01                             |
 
 **return:** proto []PurchaseReport
+
+### "Libro Mayor"
+    
+```http
+    POST /v1.JournalService/RetrieveMajorBook
+```
+| Parameter          | Type       | Description                                                                    |
+|:-------------------|:-----------|:-------------------------------------------------------------------------------|
+| `period`           | `string`   | **Required**. Period for retrieve, eg: 2024-01                                 |
+| `businessId`       | `string`   | **Required**. Company for filter, eg: bf4336e4-b9b7-11ec-b4c3-00505605deef     |
+| `isConsolidated`   | `bool`     | is consolidated, DEFAULT: false                                                |
+| `includeCuBa`      | `bool`     | include accounts bank, DEFAULT: false                                          |
+| `includeClose`     | `bool`     | include close report, DEFAULT: false                                           |
+| `lfType`           | `bool`     | include close report, DEFAULT: '', eg: 060100                                  |
+
+**return:** proto []MajorBook

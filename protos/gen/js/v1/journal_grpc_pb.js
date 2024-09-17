@@ -48,6 +48,28 @@ function deserialize_v1_RetrieveJournalReportResponse(buffer_arg) {
   return v1_journal_pb.RetrieveJournalReportResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_v1_RetrieveMajorBookRequest(arg) {
+  if (!(arg instanceof v1_journal_pb.RetrieveMajorBookRequest)) {
+    throw new Error('Expected argument of type v1.RetrieveMajorBookRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_v1_RetrieveMajorBookRequest(buffer_arg) {
+  return v1_journal_pb.RetrieveMajorBookRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_v1_RetrieveMajorBookResponse(arg) {
+  if (!(arg instanceof v1_journal_pb.RetrieveMajorBookResponse)) {
+    throw new Error('Expected argument of type v1.RetrieveMajorBookResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_v1_RetrieveMajorBookResponse(buffer_arg) {
+  return v1_journal_pb.RetrieveMajorBookResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var JournalServiceService = exports.JournalServiceService = {
   retrieveJournalReport: {
@@ -71,6 +93,17 @@ var JournalServiceService = exports.JournalServiceService = {
     requestDeserialize: deserialize_v1_RetrieveGeneralJournalRequest,
     responseSerialize: serialize_v1_RetrieveGeneralJournalResponse,
     responseDeserialize: deserialize_v1_RetrieveGeneralJournalResponse,
+  },
+  retrieveMajorBook: {
+    path: '/v1.JournalService/RetrieveMajorBook',
+    requestStream: false,
+    responseStream: false,
+    requestType: v1_journal_pb.RetrieveMajorBookRequest,
+    responseType: v1_journal_pb.RetrieveMajorBookResponse,
+    requestSerialize: serialize_v1_RetrieveMajorBookRequest,
+    requestDeserialize: deserialize_v1_RetrieveMajorBookRequest,
+    responseSerialize: serialize_v1_RetrieveMajorBookResponse,
+    responseDeserialize: deserialize_v1_RetrieveMajorBookResponse,
   },
 };
 
