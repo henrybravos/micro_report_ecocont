@@ -263,3 +263,115 @@ func (r *JournalRepository) GetLfJournals(businessID, year, month string, isCons
 
 	return results, nil
 }
+func (r *JournalRepository) GetLfMayor(businessID, year, month string, compacted, includeClose, includeCuBa bool, typeLF string) ([]*v1.MajorBook, error) {
+	operatorCompacted := "<="
+	if !compacted {
+		operatorCompacted = "="
+	}
+	sIc := ""
+	if !includeClose {
+		sIc = " AND (d.identificador NOT LIKE 'C%'"
+		if !includeCuBa {
+			sIc += " AND o.glosa <> 'Cierre de Cuentas de Balance'"
+		}
+		sIc += ")"
+	}
+
+	o51v61 := ""
+	if typeLF == "060100" {
+		o51v61 = "i4,"
+	}
+	query := fmt.Sprintf(`
+	select
+       o.id                       as id, --0
+       concat(o.cuo, '-', d.tipo) as i2,
+       d.identificador            as i3,
+       p2.codigo                  as i4,
+       p2.denominacion            as denominacion,
+       COALESCE(d.unidad_operacion, '')         as i5, --5
+       COALESCE(d.centro_costo , '')            as i6,
+       COALESCE(o.serie, '')                   as i11,
+       COALESCE(o.correlativo, '')              as i12,
+       COALESCE(o.fecha_contable::text, '')           as i13,
+       COALESCE(o.fecha_vencimiento::text, '')        as i14, --10
+       COALESCE(o.fecha_emision::text, '' )           as i15,
+       COALESCE(pg.fecha::text,'')                   as i15pg,
+       o.glosa                    as i16o,
+       COALESCE(pg.glosa, '')                   as i16, --14
+       COALESCE(o.glosa_referencia , '')        as i17,
+       COALESCE(d.debe, 0)                     as i18,
+       COALESCE( d.haber ,0)                  as i19,
+       o.dato_estructurado        as i20,
+       d.estado                   as i21,
+       o.estado_le                as estado_le,
+       o.tipo_cambio              as tipo_cambio,
+       o.codigo_libro             as codigo_libro,
+       o.periodo                  as periodo,
+       d.periodo                  as period, --25
+       o.cuo                      as cuo,
+       o.observaciones            as observaciones,
+       p2.id                      as cuenta_id,
+       COALESCE(pg.tipo_cambio, 0)             as p_tipo_cambio
+from operaciones o
+         inner join diarios d on o.id = d.operacion_id
+         left join pagos pg on d.referencia_id = pg.id
+         inner join pcge p2 on d.pcge_id = p2.id
+         inner join locales l on o.local_id = l.id
+where l.empresa_id=$1
+  AND SUBSTRING(d.periodo, 1, 4)=$2 
+  AND SUBSTRING(d.periodo, 6, 8) %s $3 
+  %s
+  AND o.comprobante_id::text <> ALL(ARRAY['a6062ae0-15a4-11ec-8fec-77a5f80a0a28', '1daedb70-a779-11eb-84c1-40b0344a6892'])
+  and o.tipo_operacion::text <> ALL(ARRAY['5913663b-a77a-11eb-8923-40b0344a6892', '59133fcc-a77a-11eb-8919-40b0344a6892'])
+  AND d.deleted_at is null
+  AND o.deleted_at is null
+  order by %s o.fecha_emision, i2, d.identificador
+`, operatorCompacted, sIc, o51v61)
+	rows, err := r.Connection.Pool.Query(context.Background(), query, businessID, year, month)
+	if err != nil {
+		fmt.Println("Query failed:", err)
+		return nil, err
+	}
+	defer rows.Close()
+	var books []*v1.MajorBook
+	for rows.Next() {
+		var book v1.MajorBook
+		err := rows.Scan(
+			&book.OId,
+			&book.OCuoDTipo,
+			&book.DIdentificador,
+			&book.P2Codigo,
+			&book.P2Denominacion,
+			&book.DUnidadOperacion,
+			&book.DCentroCosto,
+			&book.OSerie,
+			&book.OCorrelativo,
+			&book.OFechaContable,
+			&book.OFechaVencimiento,
+			&book.OFechaEmision,
+			&book.OFechaVencimiento,
+			&book.OGlosa,
+			&book.PgGlosa,
+			&book.OGlosaReferencia,
+			&book.DDebe,
+			&book.DHaber,
+			&book.ODatoEstructurado,
+			&book.DEstado,
+			&book.OEstadoLe,
+			&book.OTipoCambio,
+			&book.OCodigoLibro,
+			&book.OPeriodo,
+			&book.DPeriodo,
+			&book.OCuo,
+			&book.OObservaciones,
+			&book.P2Id,
+			&book.PgTipoCambio,
+		)
+		if err != nil {
+			fmt.Println("Error scanning row:", err)
+			return nil, err
+		}
+		books = append(books, &book)
+	}
+	return books, nil
+}

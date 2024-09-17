@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -23,7 +22,6 @@ func (s *JournalServer) RetrieveJournalReport(
 	_ context.Context,
 	req *connect.Request[v1.RetrieveJournalReportRequest],
 ) (*connect.Response[v1.RetrieveJournalReportResponse], error) {
-	log.Println("Request headers: ", req.Header())
 	businessID := req.Msg.GetBusinessId()
 	period := req.Msg.GetPeriod()
 	isConsolidated := req.Msg.GetIsConsolidated()
@@ -108,6 +106,33 @@ func (s *JournalServer) RetrieveGeneralJournal(_ context.Context, req *connect.R
 
 	res := connect.NewResponse(&v1.RetrieveGeneralJournalResponse{
 		GeneralJournals: journals,
+	})
+	res.Header().Set("Report-Version", "v1")
+	return res, nil
+}
+
+func (s *JournalServer) RetrieveMajorBook(_ context.Context, req *connect.Request[v1.RetrieveMajorBookRequest]) (*connect.Response[v1.RetrieveMajorBookResponse], error) {
+	businessID := req.Msg.GetBusinessId()
+	period := req.Msg.GetPeriod()
+	isConsolidated := req.Msg.GetIsConsolidated()
+	includeClose := req.Msg.GetIncludeClose()
+	includeCuBa := req.Msg.GetIncludeCuBa()
+	lfType := req.Msg.GetLfType()
+	if !validate.IsValidUUID(businessID) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid business ID"))
+	}
+	if !validate.IsValidPeriod(period) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid period"))
+	}
+	partsPeriod := strings.Split(period, "-")
+	year := partsPeriod[0]
+	month := partsPeriod[1]
+	journalEntries, err := s.JournalRepo.GetLfMayor(businessID, year, month, isConsolidated, includeClose, includeCuBa, lfType)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	res := connect.NewResponse(&v1.RetrieveMajorBookResponse{
+		Data: journalEntries,
 	})
 	res.Header().Set("Report-Version", "v1")
 	return res, nil
