@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package v1;
+
+message JournalEntry {
+  string id = 1;
+  string codigo = 2;
+  string denominacion = 3;
+  string empresa_id = 4;
+  string efe = 5;
+  string smvn = 6;
+  string smve = 7;
+  string tipo = 8;
+  string tipo_id = 9;
+  bool esf = 10;
+  bool erf = 11;
+  bool ern = 12;
+  bool efle = 13;
+  bool ecp = 14;
+  string cierre_id = 15;
+  int32 sequence = 16;
+  string created_at = 17;
+  string updated_at = 18;
+  string deleted_at = 19;
+  float iidebe = 20;
+  float iihaber = 21;
+  float debe = 22;
+  float haber = 23;
+}
+message RetrieveJournalReportRequest {
+  string business_id = 1;
+  string period = 2;
+  bool is_consolidated = 3;
+  bool include_close = 4;
+  bool include_cu_ba = 5;
+}
+message RetrieveJournalReportResponse {
+  repeated JournalEntry journals = 1;
+}
+message GeneralJournal {
+  string id = 1;
+  string cuo = 2;
+  string operacion = 3;
+  string descripcion = 4;
+  string cuenta = 5;
+  string denominacion = 6;
+  float debe = 7;
+  float haber = 8;
+  float suma_18 = 9;
+  float suma_19 = 10;
+  string car = 11;
+}
+message RetrieveGeneralJournalRequest {
+  string business_id = 1;
+  string period = 2;
+}
+
+message RetrieveGeneralJournalResponse {
+  repeated GeneralJournal general_journals = 1;
+}
+
+message MajorBook {
+  string o_id = 1;
+  string o_cuo_d_tipo = 2;
+  string d_identificador = 3;
+  string p2_codigo = 4;
+  string p2_denominacion = 5;
+  string d_unidad_operacion = 6;
+  string d_centro_costo = 7;
+  string o_serie = 8;
+  string o_correlativo = 9;
+  string o_fecha_contable = 10;
+  string o_fecha_vencimiento = 11;
+  string o_fecha_emision = 12;
+  string pg_fecha = 13;
+  string o_glosa = 14;
+  string pg_glosa = 15;
+  string o_glosa_referencia = 16;
+  float d_debe = 17;
+  float d_haber = 18;
+  string o_dato_estructurado = 19;
+  string d_estado = 20;
+  string o_estado_le = 21;
+  float o_tipo_cambio = 22;
+  string o_codigo_libro = 23;
+  string o_periodo = 24;
+  string d_periodo = 25;
+  string o_cuo = 26;
+  string o_observaciones = 27;
+  string p2_id = 28;
+  string pg_tipo_cambio = 29;
+}
+
+message RetrieveMajorBookRequest {
+  string business_id = 1;
+  string period = 2;
+  bool is_consolidated = 3;
+  bool include_close = 4;
+  bool include_cu_ba = 5;
+  string lf_type = 6;
+}
+message RetrieveMajorBookResponse {
+  repeated MajorBook data = 1;
+}
+
+service JournalService {
+  rpc RetrieveJournalReport(RetrieveJournalReportRequest) returns (RetrieveJournalReportResponse);
+  rpc RetrieveGeneralJournal(RetrieveGeneralJournalRequest) returns (RetrieveGeneralJournalResponse);
+  rpc RetrieveMajorBook(RetrieveMajorBookRequest) returns (RetrieveMajorBookResponse);
+}

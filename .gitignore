@@ -1,2 +1,5 @@
-tmp
-.idea
+/tmp/
+/.idea/
+/fonts/
+.env
+.vscode/

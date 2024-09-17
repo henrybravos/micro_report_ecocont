@@ -1,0 +1,19 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/henrybravo/micro-report/protos/gen/go
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt: paths=source_relative
+  - remote: buf.build/connectrpc/go
+    out: gen/go
+    opt: paths=source_relative
+  - remote: buf.build/protocolbuffers/js:v3.21.4
+    out: gen/js
+    opt: import_style=commonjs
+  - remote: buf.build/grpc/node:v1.12.4
+    out: gen/js
+    opt: import_style=commonjs
